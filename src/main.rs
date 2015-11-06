@@ -13,7 +13,7 @@ use image::{
 fn main() {
     let image = image::open(&Path::new("00.png")).unwrap();
 
-    let colors = image.pixels().map(|(_, _, color)| Color(color));
+    let colors = image.pixels().map(|(_, _, color)| color);
 
     let quantization_map: HashMap<Color, Color> = quantize(colors);
 }
@@ -72,17 +72,20 @@ impl ByteUtils for u8 {
     }
 }
 
-#[derive(PartialEq, Eq, Hash, Debug, Copy, Clone)]
-struct Color(Rgba<u8>);
+type Color = Rgba<u8>;
 
-impl Color {
-    fn as_rgb5a3 (self) -> Color {
-        let (r, g, b, a) = self.0.channels4();
+trait ColorUtils {
+    fn as_rgb5a3(self) -> Color;
+}
+
+impl ColorUtils for Color {
+    fn as_rgb5a3(self) -> Color {
+        let (r, g, b, a) = self.channels4();
         let new_a = a.approximate_3_bits();
         if new_a == 0xFF {
-            Color(Rgba { data: [r.approximate_5_bits(), g.approximate_5_bits(), b.approximate_5_bits(), new_a] })
+            Color { data: [r.approximate_5_bits(), g.approximate_5_bits(), b.approximate_5_bits(), new_a] }
         } else {
-            Color(Rgba { data: [r.approximate_4_bits(), g.approximate_4_bits(), b.approximate_4_bits(), new_a] })
+            Color { data: [r.approximate_4_bits(), g.approximate_4_bits(), b.approximate_4_bits(), new_a] }
         }
     }
 }
@@ -95,8 +98,8 @@ fn color_as_rgb5a3_test() {
         ([0xEC, 0x08, 0x09, 0xEC], [0xEE, 0x00, 0x11, 0xDB]),
     ];
     for &(test_data, expected_data) in &test_data {
-        let test_color = Color(Rgba { data: test_data });
-        let expected = Color(Rgba { data: expected_data });
+        let test_color = Color { data: test_data };
+        let expected = Color { data: expected_data };
         let result = test_color.as_rgb5a3();
         assert_eq!(expected, result);
     }
