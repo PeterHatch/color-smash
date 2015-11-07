@@ -1,6 +1,5 @@
-use image::Rgba;
-use super::Data;
 use color::{Color, ColorUtils};
+use k_means::Data;
 
 #[test]
 fn color_as_rgb5a3_test() {

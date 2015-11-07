@@ -2,7 +2,7 @@ extern crate image;
 use image::Pixel;
 
 use byte_utils::*;
-use super::Data;
+use k_means::Data;
 
 pub type Color = image::Rgba<u8>;
 
