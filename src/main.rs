@@ -1,17 +1,19 @@
-extern crate image;
-
-#[cfg(test)]
-mod tests;
-
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::path::Path;
 
+extern crate image;
 use image::{
     GenericImage,
     Pixel,
     Rgba,
 };
+
+mod byte_utils;
+use byte_utils::*;
+
+#[cfg(test)]
+mod tests;
 
 fn main() {
     let image = image::open(&Path::new("00.png")).unwrap();
@@ -19,52 +21,6 @@ fn main() {
     let colors = image.pixels().map(|(_, _, color)| color);
 
     let quantization_map: HashMap<Color, Color> = quantize(colors);
-}
-
-trait ByteUtils {
-    fn convert_8_bits_to_5(self) -> u8;
-    fn convert_8_bits_to_4(self) -> u8;
-    fn convert_8_bits_to_3(self) -> u8;
-
-    fn convert_5_bits_to_8(self) -> u8;
-    fn convert_4_bits_to_8(self) -> u8;
-    fn convert_3_bits_to_8(self) -> u8;
-
-    fn approximate_5_bits(self) -> u8;
-    fn approximate_4_bits(self) -> u8;
-    fn approximate_3_bits(self) -> u8;
-}
-
-impl ByteUtils for u8 {
-    fn convert_8_bits_to_5(self) -> u8 {
-        (((self as u32) * 31 + 127) / 255) as u8
-    }
-    fn convert_8_bits_to_4(self) -> u8 {
-        (((self as u32) + 8) / 17) as u8
-    }
-    fn convert_8_bits_to_3(self) -> u8 {
-        (((self as u32) * 7 + 127) / 255) as u8
-    }
-
-    fn convert_5_bits_to_8(self) -> u8 {
-        (((self as u32) * 255 + 15) / 31) as u8
-    }
-    fn convert_4_bits_to_8(self) -> u8 {
-        ((self as u32) * 17) as u8
-    }
-    fn convert_3_bits_to_8(self) -> u8 {
-        (((self as u32) * 255 + 3) / 7) as u8
-    }
-
-    fn approximate_5_bits(self) -> u8 {
-        self.convert_8_bits_to_5().convert_5_bits_to_8()
-    }
-    fn approximate_4_bits(self) -> u8 {
-        self.convert_8_bits_to_4().convert_4_bits_to_8()
-    }
-    fn approximate_3_bits(self) -> u8 {
-        self.convert_8_bits_to_3().convert_3_bits_to_8()
-    }
 }
 
 type Color = Rgba<u8>;
@@ -76,11 +32,11 @@ trait ColorUtils {
 impl ColorUtils for Color {
     fn as_rgb5a3(self) -> Color {
         let (r, g, b, a) = self.channels4();
-        let new_a = a.approximate_3_bits();
+        let new_a = approximate_3_bits(a);
         if new_a == 0xFF {
-            Color { data: [r.approximate_5_bits(), g.approximate_5_bits(), b.approximate_5_bits(), new_a] }
+            Color { data: [approximate_5_bits(r), approximate_5_bits(g), approximate_5_bits(b), new_a] }
         } else {
-            Color { data: [r.approximate_4_bits(), g.approximate_4_bits(), b.approximate_4_bits(), new_a] }
+            Color { data: [approximate_4_bits(r), approximate_4_bits(g), approximate_4_bits(b), new_a] }
         }
     }
 }
