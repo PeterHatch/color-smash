@@ -18,14 +18,6 @@ fn main() {
     let quantization_map: HashMap<Color, Color> = quantize(colors);
 }
 
-trait Data : Eq + Hash {
-
-}
-
-impl Data for Color {
-
-}
-
 trait ByteUtils {
     fn convert_8_bits_to_5(self) -> u8;
     fn convert_8_bits_to_4(self) -> u8;
@@ -102,6 +94,39 @@ fn color_as_rgb5a3_test() {
         let expected = Color { data: expected_data };
         let result = test_color.as_rgb5a3();
         assert_eq!(expected, result);
+    }
+}
+
+trait Data : Eq + Hash {
+    fn distance_to(&self, other: &Self) -> u64;
+}
+
+impl Data for Color {
+    fn distance_to(&self, other: &Color) -> u64 {
+        let (r1, g1, b1, a1) = self.channels4();
+        let (r2, g2, b2, a2) = other.channels4();
+
+        let opaque_distance = ((r1 as i32) - (r2 as i32)).pow(2) +
+                              ((g1 as i32) - (g2 as i32)).pow(2) +
+                              ((b1 as i32) - (b2 as i32)).pow(2);
+
+        let alpha_distance = ((a1 as i32) - (a2 as i32)).pow(2) * 3;
+
+        ((opaque_distance as u64) * (a1 as u64) * (a2 as u64)) + ((alpha_distance as u64) * 255 * 255)
+    }
+}
+
+#[test]
+fn color_distance_test() {
+    let test_data = [
+        ([0xFF, 0xFF, 0xFF, 0xFF], [0x00, 0x00, 0x00, 0xFF], 12_684_751_875),
+        ([0xFF, 0xFF, 0xFF, 0xFF], [0x00, 0x00, 0x00, 0x00], 12_684_751_875),
+    ];
+    for &(first_color, second_color, expected_distance) in &test_data {
+        let first = Color { data: first_color };
+        let second = Color { data: second_color };
+        let result = first.distance_to(&second);
+        assert_eq!(expected_distance, result);
     }
 }
 
