@@ -29,3 +29,18 @@ fn color_distance_test() {
         assert_eq!(expected_distance, result);
     }
 }
+
+#[test]
+fn color_mean_test() {
+    let test_data = [
+        ([([0xFF, 0x80, 0x00, 0xFF], 1), ([0x00, 0x00, 0x00, 0xFF], 1)], [0x80, 0x40, 0x00, 0xFF]),
+        ([([0xFF, 0xFF, 0xFF, 0x00], 1), ([0x80, 0x80, 0x80, 0x00], 1)], [0x00, 0x00, 0x00, 0x00]),
+        ([([0xFF, 0x80, 0x00, 0x80], 2), ([0x00, 0x00, 0x00, 0xFF], 1)], [0x80, 0x40, 0x00, 0xAA]),
+    ];
+    for &(colors, expected_data) in &test_data {
+        let vector: Vec<_> = colors.iter().map(|&(color_data, count)| { (Color { data: color_data }, count) }).collect();
+        let expected_mean = Color { data: expected_data };
+        let result = Color::mean_of(&vector);
+        assert_eq!(expected_mean, result);
+    }
+}

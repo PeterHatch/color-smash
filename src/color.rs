@@ -35,4 +35,34 @@ impl Data for Color {
 
         ((opaque_distance as u64) * (a1 as u64) * (a2 as u64)) + ((alpha_distance as u64) * 255 * 255)
     }
+
+    fn mean_of(data_and_counts: &Vec<(Color, u32)>) -> Color {
+        let mut r_sum = 0;
+        let mut g_sum = 0;
+        let mut b_sum = 0;
+        let mut a_sum = 0;
+        let mut total_count = 0;
+
+        for &(color, count) in data_and_counts {
+            let (r, g, b, a) = color.channels4();
+            let weighted_a = (a as u32) * count;
+
+            r_sum += (r as u32) * weighted_a;
+            g_sum += (g as u32) * weighted_a;
+            b_sum += (b as u32) * weighted_a;
+            a_sum += weighted_a;
+            total_count += count;
+        }
+
+        if a_sum > 0 {
+            let r = ((r_sum + (a_sum / 2)) / a_sum) as u8;
+            let g = ((g_sum + (a_sum / 2)) / a_sum) as u8;
+            let b = ((b_sum + (a_sum / 2)) / a_sum) as u8;
+            let a = ((a_sum + (total_count / 2)) / total_count) as u8;
+
+            Color { data: [r, g, b, a] }
+        } else {
+            Color { data: [0, 0, 0, 0] }
+        }
+    }
 }

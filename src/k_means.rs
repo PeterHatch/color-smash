@@ -3,6 +3,7 @@ use std::hash::Hash;
 
 pub trait Data : Eq + Hash {
     fn distance_to(&self, other: &Self) -> u64;
+    fn mean_of(data_and_counts: &Vec<(Self, u32)>) -> Self;
 }
 
 pub fn quantize<I>(items: I) -> HashMap<I::Item, I::Item>
