@@ -46,11 +46,7 @@ fn create_nodes<I>(items: I) -> Vec<Node<I::Item>>
         *counter += 1;
     }
 
-    let mut nodes = Vec::with_capacity(count_of_items.len());
-    for (item, count) in count_of_items {
-        nodes.push(Node { data: item, count: count });
-    }
-    nodes
+    count_of_items.into_iter().map(|(item, count)| { Node { data: item, count: count } }).collect()
 }
 
 fn initialize_centroids<T: Data>(k: usize, nodes: &Vec<Node<T>>) -> Vec<Centroid<T>> {

@@ -43,7 +43,7 @@ impl Data for Color {
         let mut a_sum = 0;
         let mut total_count = 0;
 
-        for &Node { data: color, count: count } in data_and_counts {
+        for &Node { data: color, count } in data_and_counts {
             let (r, g, b, a) = color.channels4();
             let weighted_a = (a as u32) * count;
 
