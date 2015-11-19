@@ -1,5 +1,5 @@
-use color::{Color, ColorUtils};
-use k_means::Data;
+use color::*;
+use k_means::*;
 
 #[test]
 fn color_as_rgb5a3_test() {
@@ -38,7 +38,7 @@ fn color_mean_test() {
         ([([0xFF, 0x80, 0x00, 0x80], 2), ([0x00, 0x00, 0x00, 0xFF], 1)], [0x80, 0x40, 0x00, 0xAA]),
     ];
     for &(colors, expected_data) in &test_data {
-        let vector: Vec<_> = colors.iter().map(|&(color_data, count)| { (Color { data: color_data }, count) }).collect();
+        let vector: Vec<_> = colors.iter().map(|&(color_data, count)| Node { data: Color { data: color_data }, count: count }).collect();
         let expected_mean = Color { data: expected_data };
         let result = Color::mean_of(&vector);
         assert_eq!(expected_mean, result);
