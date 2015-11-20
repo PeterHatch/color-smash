@@ -36,14 +36,14 @@ impl Data for Color {
         ((opaque_distance as u64) * (a1 as u64) * (a2 as u64)) + ((alpha_distance as u64) * 255 * 255)
     }
 
-    fn mean_of(data_and_counts: &Vec<Node<Color>>) -> Color {
+    fn mean_of(data_and_counts: &Vec<&Node<Color>>) -> Color {
         let mut r_sum = 0;
         let mut g_sum = 0;
         let mut b_sum = 0;
         let mut a_sum = 0;
         let mut total_count = 0;
 
-        for &Node { data: color, count } in data_and_counts {
+        for &&Node { data: color, count } in data_and_counts {
             let (r, g, b, a) = color.channels4();
             let weighted_a = (a as u32) * count;
 
