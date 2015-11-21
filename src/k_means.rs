@@ -73,11 +73,7 @@ fn initialize_centroids<T: Data>(k: usize, nodes: &Vec<Node<T>>) -> Vec<Centroid
 }
 
 fn find_nearest_centroids<'a, 'b, T: Data>(centroids: &'a Vec<Centroid<T>>, nodes: &'b Vec<Node<T>>) -> Vec<Vec<&'b Node<T>>> {
-    let mut nodes_per_centroid = Vec::with_capacity(centroids.len());
-
-    for _ in 0..centroids.len() {
-        nodes_per_centroid.push(Vec::new());
-    }
+    let mut nodes_per_centroid = vec![Vec::new(); centroids.len()];
 
     for node in nodes {
         let centroid_index = node.nearest(centroids);
