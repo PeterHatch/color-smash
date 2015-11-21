@@ -69,7 +69,37 @@ fn create_nodes<I>(items: I) -> Vec<Node<I::Item>>
 }
 
 fn initialize_centroids<T: Data>(k: usize, nodes: &Vec<Node<T>>) -> Vec<Centroid<T>> {
-    nodes.iter().take(k).map(|node| { node.to_centroid() }).collect()
+    let mut centroids = Vec::with_capacity(k);
+    let first_centroid = nodes.iter().max_by(|node| node.count).unwrap().to_centroid();
+    centroids.push(first_centroid);
+
+    let mut distance_per_node: Vec<_> = nodes.iter().map(|node| node.distance_to(&centroids[0])).collect();
+    let mut centroid_per_node: Vec<_> = vec![0; nodes.len()];
+
+    let mut distance_per_centroid: Vec<_> = Vec::with_capacity(k);
+    let distance_to_first_centroid = distance_per_node.iter().sum();
+    distance_per_centroid.push(distance_to_first_centroid);
+
+    while centroids.len() < k {
+        let centroid_to_split = distance_per_centroid.iter().zip(0..).max_by(|&(distance, index)| distance).unwrap().1;
+        let furthest_node_index = distance_per_node.iter().zip(centroid_per_node.iter()).zip(0..).filter(|&((_, centroid), _)| *centroid == centroid_to_split).max_by(|&((distance, _), _)| distance).unwrap().1;
+        let new_centroid = nodes[furthest_node_index].to_centroid();
+        let new_centroid_index = centroids.len();
+        distance_per_centroid.push(0);
+
+        for ((node, distance), centroid) in nodes.iter().zip(distance_per_node.iter_mut()).zip(centroid_per_node.iter_mut()) {
+            let new_distance = node.distance_to(&new_centroid);
+            if new_distance < *distance {
+                distance_per_centroid[*centroid] -= *distance;
+                *centroid = new_centroid_index;
+                *distance = new_distance;
+                distance_per_centroid[new_centroid_index] += new_distance;
+            }
+        }
+        centroids.push(new_centroid);
+    }
+
+    centroids
 }
 
 fn find_nearest_centroids<'a, 'b, T: Data>(centroids: &'a Vec<Centroid<T>>, nodes: &'b Vec<Node<T>>) -> Vec<Vec<&'b Node<T>>> {

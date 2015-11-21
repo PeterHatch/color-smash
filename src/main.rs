@@ -1,4 +1,5 @@
 #![feature(iter_cmp)]
+#![feature(iter_arith)]
 
 use std::collections::HashMap;
 use std::path::Path;
