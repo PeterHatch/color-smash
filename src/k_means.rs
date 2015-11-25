@@ -3,9 +3,10 @@ use std::fmt::Debug;
 use std::hash::Hash;
 
 pub trait Data : Eq + Hash + Copy + Clone + Debug {
-    fn distance_to(&self, other: &Self) -> u64;
-    fn mean_of(data_and_counts: &Vec<&Node<Self>>) -> Self;
-    fn as_output(&self) -> Self;
+    type Output: Eq + Hash + Copy + Clone + Debug;
+    fn distance_to(&self, other: &Self::Output) -> u64;
+    fn mean_of(data_and_counts: &Vec<&Node<Self>>) -> Self::Output;
+    fn as_output(&self) -> Self::Output;
 }
 
 #[derive(PartialEq, Eq, Debug)]
@@ -30,10 +31,10 @@ impl<T: Data> Node<T> {
 
 #[derive(PartialEq, Eq, Hash, Debug)]
 struct Centroid<T: Data> {
-    data: T,
+    data: T::Output,
 }
 
-pub fn quantize<I>(items: I) -> HashMap<I::Item, I::Item>
+pub fn quantize<I>(items: I) -> HashMap<I::Item, <I::Item as Data>::Output>
     where I: Iterator,
           I::Item: Data {
     let k = 256;
@@ -143,7 +144,7 @@ fn reposition_centroids<T: Data>(centroids: &mut Vec<Centroid<T>>, nodes_per_cen
     }
 }
 
-fn create_quantization_map<T: Data>(centroids: &Vec<Centroid<T>>, nodes_per_centroid: &Vec<Vec<&Node<T>>>) -> HashMap<T, T> {
+fn create_quantization_map<T: Data>(centroids: &Vec<Centroid<T>>, nodes_per_centroid: &Vec<Vec<&Node<T>>>) -> HashMap<T, T::Output> {
     let mut quantization_map = HashMap::new();
 
     for (centroid, nodes) in centroids.iter().zip(nodes_per_centroid.iter()) {

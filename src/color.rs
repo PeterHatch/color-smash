@@ -36,6 +36,8 @@ impl ColorUtils for Color {
 }
 
 impl Data for Color {
+    type Output = Color;
+
     fn distance_to(&self, other: &Color) -> u64 {
         let closest_possible_distance = self.simple_distance_to(&self.as_output());
         self.simple_distance_to(other) - closest_possible_distance
