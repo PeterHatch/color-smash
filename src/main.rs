@@ -21,6 +21,15 @@ fn main() {
 
     let quantization_map = quantize_image(&image);
 
+    // Temp diagnostic output
+    {
+        let mut colors = std::collections::HashSet::new();
+        for color in quantization_map.values() {
+            colors.insert(color);
+        }
+        println!("Colors = {:?}", colors.len());
+    }
+
     for pixel in image.pixels_mut() {
         let &new_color = quantization_map.get(pixel).unwrap();
         *pixel = new_color;
@@ -30,6 +39,12 @@ fn main() {
 }
 
 fn quantize_image(image: &RgbaImage) -> HashMap<Color, Color> {
-    let colors = image.pixels().map(|&color| color);
+    let colors = image.pixels().map(|&color| {
+        if color.data[3] == 0 {
+            Color { data: [0, 0, 0, 0] }
+        } else {
+            color
+        }
+    });
     k_means::quantize(colors)
 }

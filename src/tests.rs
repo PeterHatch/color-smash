@@ -1,5 +1,12 @@
 use color::*;
 use k_means::*;
+use ::quantize_image;
+
+use std::collections::HashSet;
+use std::path::Path;
+use image;
+use image::RgbaImage;
+
 
 #[test]
 fn color_as_rgb5a3_test() {
@@ -38,9 +45,36 @@ fn color_mean_test() {
         ([([0xFF, 0x80, 0x00, 0x80], 2), ([0x00, 0x00, 0x00, 0xFF], 1)], [0x80, 0x40, 0x00, 0xAA]),
     ];
     for &(colors, expected_data) in &test_data {
-        let vector: Vec<_> = colors.iter().map(|&(color_data, count)| Node { data: Color { data: color_data }, count: count }).collect();
+        let nodes: Vec<_> = colors.iter().map(|&(color_data, count)| Node { data: Color { data: color_data }, count: count }).collect();
+        let vector: Vec<_> = nodes.iter().collect();
         let expected_mean = Color { data: expected_data };
         let result = Color::mean_of(&vector);
         assert_eq!(expected_mean, result);
+    }
+}
+
+fn load_test_image() -> RgbaImage {
+    image::open(&Path::new("00.png")).unwrap().to_rgba()
+}
+
+#[test]
+fn has_256_colors() {
+    let image = load_test_image();
+    let quantization_map = quantize_image(&image);
+    let mut colors = HashSet::new();
+    for color in quantization_map.values() {
+        colors.insert(color);
+    }
+    assert_eq!(colors.len(), 256);
+}
+
+#[test]
+fn rgb_is_zero_if_alpha_is() {
+    let image = load_test_image();
+    let quantization_map = quantize_image(&image);
+    for color in quantization_map.values().into_iter().chain(quantization_map.keys().into_iter()) {
+        if color.data[3] == 0 {
+            assert_eq!(color.data, [0, 0, 0, 0]);
+        }
     }
 }

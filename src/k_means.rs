@@ -5,6 +5,7 @@ use std::hash::Hash;
 pub trait Data : Eq + Hash + Copy + Clone + Debug {
     fn distance_to(&self, other: &Self) -> u64;
     fn mean_of(data_and_counts: &Vec<&Node<Self>>) -> Self;
+    fn as_output(&self) -> Self;
 }
 
 #[derive(PartialEq, Eq, Debug)]
@@ -15,7 +16,7 @@ pub struct Node<T: Data> {
 
 impl<T: Data> Node<T> {
     fn to_centroid(&self) -> Centroid<T> {
-        Centroid { data: self.data }
+        Centroid { data: self.data.as_output() }
     }
 
     fn distance_to(&self, centroid: &Centroid<T>) -> u64 {
@@ -38,11 +39,29 @@ pub fn quantize<I>(items: I) -> HashMap<I::Item, I::Item>
     let k = 256;
 
     let nodes = create_nodes(items);
+    println!("{:?} Nodes", nodes.len());
     let mut centroids = initialize_centroids(k, &nodes);
 
     let mut nodes_per_centroid = find_nearest_centroids(&centroids, &nodes);
 
-    loop {
+    for iteration in 1.. {
+        println!("Iteration {:?}", iteration);
+
+        // Temp diagnostic message
+        {
+            let mut empty_centroids = 0;
+            for node_list in &nodes_per_centroid {
+                if node_list.is_empty() {
+                    empty_centroids += 1;
+                }
+            }
+            match empty_centroids {
+                0 => (),
+                1 => println!("1 centroid with no nodes found."),
+                _ => println!("{} centroids with no nodes found.", empty_centroids),
+            }
+        }
+
         let last_nodes_per_centroid = nodes_per_centroid.clone();
         reposition_centroids(&mut centroids, &nodes_per_centroid);
         nodes_per_centroid = find_nearest_centroids(&centroids, &nodes);
@@ -81,9 +100,14 @@ fn initialize_centroids<T: Data>(k: usize, nodes: &Vec<Node<T>>) -> Vec<Centroid
     distance_per_centroid.push(distance_to_first_centroid);
 
     while centroids.len() < k {
-        let centroid_to_split = distance_per_centroid.iter().zip(0..).max_by(|&(distance, index)| distance).unwrap().1;
+        let centroid_to_split = distance_per_centroid.iter().zip(0..).max_by(|&(distance, _index)| distance).unwrap().1;
         let furthest_node_index = distance_per_node.iter().zip(centroid_per_node.iter()).zip(0..).filter(|&((_, centroid), _)| *centroid == centroid_to_split).max_by(|&((distance, _), _)| distance).unwrap().1;
         let new_centroid = nodes[furthest_node_index].to_centroid();
+
+        if let Some(_) = centroids.iter().find(|&centroid| *centroid == new_centroid) {
+            println!("Created duplicate centroid: {:?}", new_centroid);
+        }
+
         let new_centroid_index = centroids.len();
         distance_per_centroid.push(0);
 

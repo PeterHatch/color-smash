@@ -8,22 +8,20 @@ pub type Color = image::Rgba<u8>;
 
 pub trait ColorUtils {
     fn as_rgb5a3(self) -> Color;
+    fn simple_distance_to(&self, other: &Color) -> u64;
 }
 
 impl ColorUtils for Color {
     fn as_rgb5a3(self) -> Color {
         let (r, g, b, a) = self.channels4();
-        let new_a = approximate_3_bits(a);
-        if new_a == 0xFF {
-            Color { data: [approximate_5_bits(r), approximate_5_bits(g), approximate_5_bits(b), new_a] }
-        } else {
-            Color { data: [approximate_4_bits(r), approximate_4_bits(g), approximate_4_bits(b), new_a] }
+        match approximate_3_bits(a) {
+            0x00 => Color { data: [0, 0, 0, 0] },
+            0xFF => Color { data: [approximate_5_bits(r), approximate_5_bits(g), approximate_5_bits(b), 0xFF] },
+            new_a => Color { data: [approximate_4_bits(r), approximate_4_bits(g), approximate_4_bits(b), new_a] },
         }
     }
-}
 
-impl Data for Color {
-    fn distance_to(&self, other: &Color) -> u64 {
+    fn simple_distance_to(&self, other: &Color) -> u64 {
         let (r1, g1, b1, a1) = self.channels4();
         let (r2, g2, b2, a2) = other.channels4();
 
@@ -34,6 +32,13 @@ impl Data for Color {
         let alpha_distance = ((a1 as i32) - (a2 as i32)).pow(2) * 3;
 
         ((opaque_distance as u64) * (a1 as u64) * (a2 as u64)) + ((alpha_distance as u64) * 255 * 255)
+    }
+}
+
+impl Data for Color {
+    fn distance_to(&self, other: &Color) -> u64 {
+        let closest_possible_distance = self.simple_distance_to(&self.as_output());
+        self.simple_distance_to(other) - closest_possible_distance
     }
 
     fn mean_of(data_and_counts: &Vec<&Node<Color>>) -> Color {
@@ -60,9 +65,13 @@ impl Data for Color {
             let b = ((b_sum + (a_sum / 2)) / a_sum) as u8;
             let a = ((a_sum + (total_count / 2)) / total_count) as u8;
 
-            Color { data: [r, g, b, a] }
+            Color { data: [r, g, b, a] }.as_output()
         } else {
             Color { data: [0, 0, 0, 0] }
         }
+    }
+
+    fn as_output(&self) -> Color {
+        self.as_rgb5a3()
     }
 }
