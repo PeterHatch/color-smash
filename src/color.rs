@@ -2,7 +2,7 @@ extern crate image;
 use image::Pixel;
 
 use byte_utils::*;
-use k_means::{Data, Node};
+use k_means::{SimpleInput, Input, Output, Grouped};
 
 pub type Color = image::Rgba<u8>;
 
@@ -35,7 +35,7 @@ impl ColorUtils for Color {
     }
 }
 
-impl Data for Color {
+impl SimpleInput for Color {
     type Output = Color;
 
     fn distance_to(&self, other: &Color) -> u64 {
@@ -43,14 +43,20 @@ impl Data for Color {
         self.simple_distance_to(other) - closest_possible_distance
     }
 
-    fn mean_of(data_and_counts: &Vec<&Node<Color>>) -> Color {
+    fn as_output(&self) -> Color {
+        self.as_rgb5a3()
+    }
+}
+
+impl Input for Grouped<Color> {
+    fn mean_of(data_and_counts: &Vec<&Grouped<Color>>) -> Color {
         let mut r_sum = 0;
         let mut g_sum = 0;
         let mut b_sum = 0;
         let mut a_sum = 0;
         let mut total_count = 0;
 
-        for &&Node { data: color, count } in data_and_counts {
+        for &&Grouped { data: color, count } in data_and_counts {
             let (r, g, b, a) = color.channels4();
             let weighted_a = (a as u32) * count;
 
@@ -72,8 +78,6 @@ impl Data for Color {
             Color { data: [0, 0, 0, 0] }
         }
     }
-
-    fn as_output(&self) -> Color {
-        self.as_rgb5a3()
-    }
 }
+
+impl Output for Color {}

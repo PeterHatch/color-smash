@@ -2,44 +2,59 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
 
-pub trait Data : Eq + Hash + Copy + Clone + Debug {
-    type Output: Eq + Hash + Copy + Clone + Debug;
+pub trait SimpleInput : Eq + Hash + Copy + Debug {
+    type Output: Output;
     fn distance_to(&self, other: &Self::Output) -> u64;
-    fn mean_of(data_and_counts: &Vec<&Node<Self>>) -> Self::Output;
     fn as_output(&self) -> Self::Output;
+    fn nearest(&self, centroids: &Vec<Self::Output>) -> u32 {
+        centroids.iter().zip(0..).min_by(|&(centroid, _)| self.distance_to(centroid)).unwrap().1
+    }
+    fn count(&self) -> u32 {
+        1
+    }
 }
 
-#[derive(PartialEq, Eq, Debug)]
-pub struct Node<T: Data> {
+pub trait Input : SimpleInput {
+    fn mean_of(data_and_counts: &Vec<&Self>) -> Self::Output;
+}
+
+pub trait Output : Eq + Hash + Copy + Debug {}
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
+pub struct Grouped<T: SimpleInput> {
     pub data: T,
     pub count: u32,
 }
 
-impl<T: Data> Node<T> {
-    fn to_centroid(&self) -> Centroid<T> {
-        Centroid { data: self.data.as_output() }
-    }
-
-    fn distance_to(&self, centroid: &Centroid<T>) -> u64 {
-        self.data.distance_to(&centroid.data)
-    }
-
-    fn nearest(&self, centroids: &Vec<Centroid<T>>) -> u32 {
-        centroids.iter().zip(0..).min_by(|&(centroid, _)| self.distance_to(centroid)).unwrap().1
-    }
-}
-
-#[derive(PartialEq, Eq, Hash, Debug)]
-struct Centroid<T: Data> {
-    data: T::Output,
-}
-
-pub fn quantize<I>(items: I) -> HashMap<I::Item, <I::Item as Data>::Output>
+pub fn collect_groups<I>(items: I) -> Vec<Grouped<I::Item>>
     where I: Iterator,
-          I::Item: Data {
+          I::Item: SimpleInput {
+
+    let mut count_of_items: HashMap<I::Item, u32> = HashMap::new();
+    for item in items {
+        let counter = count_of_items.entry(item).or_insert(0);
+        *counter += 1;
+    }
+
+    count_of_items.into_iter().map(|(item, count)| { Grouped { data: item, count: count } }).collect()
+}
+
+impl<T: SimpleInput> SimpleInput for Grouped<T> {
+    type Output = T::Output;
+    fn distance_to(&self, other: &Self::Output) -> u64 {
+        self.data.distance_to(other)
+    }
+    fn as_output(&self) -> Self::Output {
+        self.data.as_output()
+    }
+    fn count(&self) -> u32 {
+        self.count
+    }
+}
+
+pub fn quantize<T: Input>(nodes: &Vec<T>) -> (Vec<T::Output>, Vec<Vec<&T>>) {
     let k = 256;
 
-    let nodes = create_nodes(items);
     println!("{:?} Nodes", nodes.len());
     let mut centroids = initialize_centroids(k, &nodes);
 
@@ -72,38 +87,25 @@ pub fn quantize<I>(items: I) -> HashMap<I::Item, <I::Item as Data>::Output>
         }
     }
 
-    create_quantization_map(&centroids, &nodes_per_centroid)
+    (centroids, nodes_per_centroid)
 }
 
-fn create_nodes<I>(items: I) -> Vec<Node<I::Item>>
-    where I: Iterator,
-          I::Item: Data {
-
-    let mut count_of_items: HashMap<I::Item, u32> = HashMap::new();
-    for item in items {
-        let counter = count_of_items.entry(item).or_insert(0);
-        *counter += 1;
-    }
-
-    count_of_items.into_iter().map(|(item, count)| { Node { data: item, count: count } }).collect()
-}
-
-fn initialize_centroids<T: Data>(k: usize, nodes: &Vec<Node<T>>) -> Vec<Centroid<T>> {
+fn initialize_centroids<T: Input>(k: usize, nodes: &Vec<T>) -> Vec<T::Output> {
     let mut centroids = Vec::with_capacity(k);
-    let first_centroid = nodes.iter().max_by(|node| node.count).unwrap().to_centroid();
+    let first_centroid = nodes.iter().max_by(|node| node.count()).unwrap().as_output();
     centroids.push(first_centroid);
 
     let mut distance_per_node: Vec<_> = nodes.iter().map(|node| node.distance_to(&centroids[0])).collect();
     let mut centroid_per_node: Vec<_> = vec![0; nodes.len()];
 
     let mut distance_per_centroid: Vec<_> = Vec::with_capacity(k);
-    let distance_to_first_centroid = distance_per_node.iter().sum();
+    let distance_to_first_centroid = nodes.iter().zip(distance_per_node.iter()).map(|(node, distance)| distance * (node.count() as u64)).sum();
     distance_per_centroid.push(distance_to_first_centroid);
 
     while centroids.len() < k {
         let centroid_to_split = distance_per_centroid.iter().zip(0..).max_by(|&(distance, _index)| distance).unwrap().1;
         let furthest_node_index = distance_per_node.iter().zip(centroid_per_node.iter()).zip(0..).filter(|&((_, centroid), _)| *centroid == centroid_to_split).max_by(|&((distance, _), _)| distance).unwrap().1;
-        let new_centroid = nodes[furthest_node_index].to_centroid();
+        let new_centroid = nodes[furthest_node_index].as_output();
 
         if let Some(_) = centroids.iter().find(|&centroid| *centroid == new_centroid) {
             println!("Created duplicate centroid: {:?}", new_centroid);
@@ -115,10 +117,10 @@ fn initialize_centroids<T: Data>(k: usize, nodes: &Vec<Node<T>>) -> Vec<Centroid
         for ((node, distance), centroid) in nodes.iter().zip(distance_per_node.iter_mut()).zip(centroid_per_node.iter_mut()) {
             let new_distance = node.distance_to(&new_centroid);
             if new_distance < *distance {
-                distance_per_centroid[*centroid] -= *distance;
+                distance_per_centroid[*centroid] -= *distance * (node.count() as u64);
                 *centroid = new_centroid_index;
                 *distance = new_distance;
-                distance_per_centroid[new_centroid_index] += new_distance;
+                distance_per_centroid[new_centroid_index] += new_distance * (node.count() as u64);
             }
         }
         centroids.push(new_centroid);
@@ -127,7 +129,7 @@ fn initialize_centroids<T: Data>(k: usize, nodes: &Vec<Node<T>>) -> Vec<Centroid
     centroids
 }
 
-fn find_nearest_centroids<'a, 'b, T: Data>(centroids: &'a Vec<Centroid<T>>, nodes: &'b Vec<Node<T>>) -> Vec<Vec<&'b Node<T>>> {
+fn find_nearest_centroids<'a, 'b, T: Input>(centroids: &'a Vec<T::Output>, nodes: &'b Vec<T>) -> Vec<Vec<&'b T>> {
     let mut nodes_per_centroid = vec![Vec::new(); centroids.len()];
 
     for node in nodes {
@@ -138,20 +140,8 @@ fn find_nearest_centroids<'a, 'b, T: Data>(centroids: &'a Vec<Centroid<T>>, node
     nodes_per_centroid
 }
 
-fn reposition_centroids<T: Data>(centroids: &mut Vec<Centroid<T>>, nodes_per_centroid: &Vec<Vec<&Node<T>>>) {
+fn reposition_centroids<T: Input>(centroids: &mut Vec<T::Output>, nodes_per_centroid: &Vec<Vec<&T>>) {
     for (centroid, nodes) in centroids.iter_mut().zip(nodes_per_centroid.iter()) {
-        centroid.data = T::mean_of(nodes);
+        *centroid = T::mean_of(nodes);
     }
-}
-
-fn create_quantization_map<T: Data>(centroids: &Vec<Centroid<T>>, nodes_per_centroid: &Vec<Vec<&Node<T>>>) -> HashMap<T, T::Output> {
-    let mut quantization_map = HashMap::new();
-
-    for (centroid, nodes) in centroids.iter().zip(nodes_per_centroid.iter()) {
-        for node in nodes {
-            quantization_map.insert(node.data, centroid.data);
-        }
-    }
-
-    quantization_map
 }

@@ -46,5 +46,16 @@ fn quantize_image(image: &RgbaImage) -> HashMap<Color, Color> {
             color
         }
     });
-    k_means::quantize(colors)
+    let grouped_colors = k_means::collect_groups(colors);
+    let (centroids, grouped_colors_per_centroid) = k_means::quantize(&grouped_colors);
+
+    let mut quantization_map = HashMap::new();
+
+    for (&centroid, grouped_colors) in centroids.iter().zip(grouped_colors_per_centroid.iter()) {
+        for &grouped_color in grouped_colors {
+            quantization_map.insert(grouped_color.data, centroid);
+        }
+    }
+
+    quantization_map
 }

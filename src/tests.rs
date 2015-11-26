@@ -45,10 +45,10 @@ fn color_mean_test() {
         ([([0xFF, 0x80, 0x00, 0x80], 2), ([0x00, 0x00, 0x00, 0xFF], 1)], [0x80, 0x40, 0x00, 0xAA]),
     ];
     for &(colors, expected_data) in &test_data {
-        let nodes: Vec<_> = colors.iter().map(|&(color_data, count)| Node { data: Color { data: color_data }, count: count }).collect();
+        let nodes: Vec<_> = colors.iter().map(|&(color_data, count)| Grouped { data: Color { data: color_data }, count: count }).collect();
         let vector: Vec<_> = nodes.iter().collect();
         let expected_mean = Color { data: expected_data };
-        let result = Color::mean_of(&vector);
+        let result = Grouped::<Color>::mean_of(&vector);
         assert_eq!(expected_mean, result);
     }
 }
