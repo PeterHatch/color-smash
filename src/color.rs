@@ -73,21 +73,61 @@ impl Color for Rgb5a3 {
     }
 }
 
-impl SimpleInput for Rgba8 {
-    type Output = Rgb5a3;
+impl SimpleInput<Rgba8> for Rgba8 {
+    fn distance_to(&self, other: &Rgba8) -> u64 {
+        self.simple_distance_to(other)
+    }
 
-    fn distance_to(&self, other: &Self::Output) -> u64 {
-        let closest_possible_distance = self.simple_distance_to(&self.as_output());
+    fn as_output(&self) -> Rgba8 {
+        *self
+    }
+}
+
+impl SimpleInput<Rgb5a3> for Rgba8 {
+    fn distance_to(&self, other: &Rgb5a3) -> u64 {
+        let closest_possible_distance = self.simple_distance_to::<Rgb5a3>(&self.as_output());
         self.simple_distance_to(other) - closest_possible_distance
     }
 
-    fn as_output(&self) -> Self::Output {
+    fn as_output(&self) -> Rgb5a3 {
         let (r, g, b, a) = self.components();
         Rgb5a3::new(r, g, b, a)
     }
 }
 
-impl Input for Grouped<Rgba8> {
+impl Input<Rgba8> for Grouped<Rgba8> {
+    fn mean_of(data_and_counts: &Vec<&Grouped<Rgba8>>) -> Rgba8 {
+        let mut r_sum = 0;
+        let mut g_sum = 0;
+        let mut b_sum = 0;
+        let mut a_sum = 0;
+        let mut total_count = 0;
+
+        for &&Grouped { data: color, count } in data_and_counts {
+            let (r, g, b, a) = color.components();
+            let weighted_a = (a as u32) * count;
+
+            r_sum += (r as u32) * weighted_a;
+            g_sum += (g as u32) * weighted_a;
+            b_sum += (b as u32) * weighted_a;
+            a_sum += weighted_a;
+            total_count += count;
+        }
+
+        if a_sum > 0 {
+            let r = ((r_sum + (a_sum / 2)) / a_sum) as u8;
+            let g = ((g_sum + (a_sum / 2)) / a_sum) as u8;
+            let b = ((b_sum + (a_sum / 2)) / a_sum) as u8;
+            let a = ((a_sum + (total_count / 2)) / total_count) as u8;
+
+            Rgba8::new(r, g, b, a)
+        } else {
+            Rgba8::new(0, 0, 0, 0)
+        }
+    }
+}
+
+impl Input<Rgb5a3> for Grouped<Rgba8> {
     fn mean_of(data_and_counts: &Vec<&Grouped<Rgba8>>) -> Rgb5a3 {
         let mut r_sum = 0;
         let mut g_sum = 0;
@@ -119,4 +159,5 @@ impl Input for Grouped<Rgba8> {
     }
 }
 
+impl Output for Rgba8 {}
 impl Output for Rgb5a3 {}

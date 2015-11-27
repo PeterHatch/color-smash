@@ -2,11 +2,10 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
 
-pub trait SimpleInput : Eq + Hash + Copy + Debug {
-    type Output: Output;
-    fn distance_to(&self, other: &Self::Output) -> u64;
-    fn as_output(&self) -> Self::Output;
-    fn nearest(&self, centroids: &Vec<Self::Output>) -> u32 {
+pub trait SimpleInput<O: Output> : Eq + Hash + Copy + Debug {
+    fn distance_to(&self, other: &O) -> u64;
+    fn as_output(&self) -> O;
+    fn nearest(&self, centroids: &Vec<O>) -> u32 {
         centroids.iter().zip(0..).min_by(|&(centroid, _)| self.distance_to(centroid)).unwrap().1
     }
     fn count(&self) -> u32 {
@@ -14,21 +13,22 @@ pub trait SimpleInput : Eq + Hash + Copy + Debug {
     }
 }
 
-pub trait Input : SimpleInput {
-    fn mean_of(data_and_counts: &Vec<&Self>) -> Self::Output;
+pub trait Input<O: Output> : SimpleInput<O> {
+    fn mean_of(data_and_counts: &Vec<&Self>) -> O;
 }
 
 pub trait Output : Eq + Hash + Copy + Debug {}
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
-pub struct Grouped<T: SimpleInput> {
+pub struct Grouped<T> {
     pub data: T,
     pub count: u32,
 }
 
-pub fn collect_groups<I>(items: I) -> Vec<Grouped<I::Item>>
+pub fn collect_groups<I, O>(items: I) -> Vec<Grouped<I::Item>>
     where I: Iterator,
-          I::Item: SimpleInput {
+          I::Item: SimpleInput<O>,
+          O: Output {
 
     let mut count_of_items: HashMap<I::Item, u32> = HashMap::new();
     for item in items {
@@ -39,12 +39,11 @@ pub fn collect_groups<I>(items: I) -> Vec<Grouped<I::Item>>
     count_of_items.into_iter().map(|(item, count)| { Grouped { data: item, count: count } }).collect()
 }
 
-impl<T: SimpleInput> SimpleInput for Grouped<T> {
-    type Output = T::Output;
-    fn distance_to(&self, other: &Self::Output) -> u64 {
+impl<T: SimpleInput<O>, O: Output> SimpleInput<O> for Grouped<T> {
+    fn distance_to(&self, other: &O) -> u64 {
         self.data.distance_to(other)
     }
-    fn as_output(&self) -> Self::Output {
+    fn as_output(&self) -> O {
         self.data.as_output()
     }
     fn count(&self) -> u32 {
@@ -52,7 +51,7 @@ impl<T: SimpleInput> SimpleInput for Grouped<T> {
     }
 }
 
-pub fn quantize<T: Input>(nodes: &Vec<T>) -> (Vec<T::Output>, Vec<Vec<&T>>) {
+pub fn quantize<I: Input<O>, O: Output>(nodes: &Vec<I>) -> (Vec<O>, Vec<Vec<&I>>) {
     let k = 256;
 
     println!("{:?} Nodes", nodes.len());
@@ -90,7 +89,7 @@ pub fn quantize<T: Input>(nodes: &Vec<T>) -> (Vec<T::Output>, Vec<Vec<&T>>) {
     (centroids, nodes_per_centroid)
 }
 
-fn initialize_centroids<T: Input>(k: usize, nodes: &Vec<T>) -> Vec<T::Output> {
+fn initialize_centroids<I: Input<O>, O: Output>(k: usize, nodes: &Vec<I>) -> Vec<O> {
     let mut centroids = Vec::with_capacity(k);
     let first_centroid = nodes.iter().max_by(|node| node.count()).unwrap().as_output();
     centroids.push(first_centroid);
@@ -129,7 +128,7 @@ fn initialize_centroids<T: Input>(k: usize, nodes: &Vec<T>) -> Vec<T::Output> {
     centroids
 }
 
-fn find_nearest_centroids<'a, 'b, T: Input>(centroids: &'a Vec<T::Output>, nodes: &'b Vec<T>) -> Vec<Vec<&'b T>> {
+fn find_nearest_centroids<'a, 'b, I: Input<O>, O: Output>(centroids: &'a Vec<O>, nodes: &'b Vec<I>) -> Vec<Vec<&'b I>> {
     let mut nodes_per_centroid = vec![Vec::new(); centroids.len()];
 
     for node in nodes {
@@ -140,8 +139,8 @@ fn find_nearest_centroids<'a, 'b, T: Input>(centroids: &'a Vec<T::Output>, nodes
     nodes_per_centroid
 }
 
-fn reposition_centroids<T: Input>(centroids: &mut Vec<T::Output>, nodes_per_centroid: &Vec<Vec<&T>>) {
+fn reposition_centroids<I: Input<O>, O: Output>(centroids: &mut Vec<O>, nodes_per_centroid: &Vec<Vec<&I>>) {
     for (centroid, nodes) in centroids.iter_mut().zip(nodes_per_centroid.iter()) {
-        *centroid = T::mean_of(nodes);
+        *centroid = I::mean_of(nodes);
     }
 }

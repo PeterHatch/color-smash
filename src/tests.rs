@@ -18,8 +18,8 @@ fn color_as_rgb5a3_test() {
     for &(test_data, expected_data) in &test_data {
         let test_color = Rgba8 { data: Pixel { data: test_data } };
         let expected = Pixel { data: expected_data };
-        let result = test_color.as_output().as_pixel();
-        assert_eq!(expected, result);
+        let result: Rgb5a3 = test_color.as_output();
+        assert_eq!(expected, result.as_pixel());
     }
 }
 
@@ -47,7 +47,7 @@ fn color_mean_test() {
     for &(colors, expected_data) in &test_data {
         let nodes: Vec<_> = colors.iter().map(|&(color_data, count)| Grouped { data: Rgba8 { data: Pixel { data: color_data } }, count: count }).collect();
         let vector: Vec<_> = nodes.iter().collect();
-        let expected_mean = Rgb5a3 { data: Pixel { data: expected_data } };
+        let expected_mean = Rgba8 { data: Pixel { data: expected_data } };
         let result = Grouped::mean_of(&vector);
         assert_eq!(expected_mean, result);
     }

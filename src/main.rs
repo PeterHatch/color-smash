@@ -9,7 +9,7 @@ use image::{GenericImage, RgbaImage, Pixel as PixelTrait};
 
 mod byte_utils;
 mod color;
-use color::{Color, Pixel, Rgba8};
+use color::{Color, Pixel, Rgba8, Rgb5a3};
 mod k_means;
 
 #[cfg(test)]
@@ -43,8 +43,8 @@ fn quantize_image(image: &RgbaImage) -> HashMap<Pixel, Pixel> {
         let (r, g, b, a) = color.channels4();
         Rgba8::new(r, g, b, a)
     });
-    let grouped_colors = k_means::collect_groups(colors);
-    let (centroids, grouped_colors_per_centroid) = k_means::quantize(&grouped_colors);
+    let grouped_colors = k_means::collect_groups::<_, Rgb5a3>(colors);
+    let (centroids, grouped_colors_per_centroid): (Vec<Rgb5a3>, _) = k_means::quantize(&grouped_colors);
 
     let mut quantization_map = HashMap::new();
 
