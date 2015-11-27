@@ -5,11 +5,11 @@ use std::collections::HashMap;
 use std::path::Path;
 
 extern crate image;
-use image::{GenericImage, RgbaImage};
+use image::{GenericImage, RgbaImage, Pixel as PixelTrait};
 
 mod byte_utils;
 mod color;
-use color::Color;
+use color::{Color, Pixel, Rgba8};
 mod k_means;
 
 #[cfg(test)]
@@ -38,13 +38,10 @@ fn main() {
     image.save("output.png");
 }
 
-fn quantize_image(image: &RgbaImage) -> HashMap<Color, Color> {
+fn quantize_image(image: &RgbaImage) -> HashMap<Pixel, Pixel> {
     let colors = image.pixels().map(|&color| {
-        if color.data[3] == 0 {
-            Color { data: [0, 0, 0, 0] }
-        } else {
-            color
-        }
+        let (r, g, b, a) = color.channels4();
+        Rgba8::new(r, g, b, a)
     });
     let grouped_colors = k_means::collect_groups(colors);
     let (centroids, grouped_colors_per_centroid) = k_means::quantize(&grouped_colors);
@@ -53,7 +50,7 @@ fn quantize_image(image: &RgbaImage) -> HashMap<Color, Color> {
 
     for (&centroid, grouped_colors) in centroids.iter().zip(grouped_colors_per_centroid.iter()) {
         for &grouped_color in grouped_colors {
-            quantization_map.insert(grouped_color.data, centroid);
+            quantization_map.insert(grouped_color.data.as_pixel(), centroid.as_pixel());
         }
     }
 

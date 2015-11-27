@@ -16,9 +16,9 @@ fn color_as_rgb5a3_test() {
         ([0xEC, 0x08, 0x09, 0xEC], [0xEE, 0x00, 0x11, 0xDB]),
     ];
     for &(test_data, expected_data) in &test_data {
-        let test_color = Color { data: test_data };
-        let expected = Color { data: expected_data };
-        let result = test_color.as_rgb5a3();
+        let test_color = Rgba8 { data: Pixel { data: test_data } };
+        let expected = Pixel { data: expected_data };
+        let result = test_color.as_output().as_pixel();
         assert_eq!(expected, result);
     }
 }
@@ -30,8 +30,8 @@ fn color_distance_test() {
         ([0xFF, 0xFF, 0xFF, 0xFF], [0x00, 0x00, 0x00, 0x00], 12_684_751_875),
     ];
     for &(first_color, second_color, expected_distance) in &test_data {
-        let first = Color { data: first_color };
-        let second = Color { data: second_color };
+        let first = Rgba8 { data: Pixel { data: first_color } };
+        let second = Rgb5a3 { data: Pixel { data: second_color } };
         let result = first.distance_to(&second);
         assert_eq!(expected_distance, result);
     }
@@ -45,10 +45,10 @@ fn color_mean_test() {
         ([([0xFF, 0x80, 0x00, 0x80], 2), ([0x00, 0x00, 0x00, 0xFF], 1)], [0x80, 0x40, 0x00, 0xAA]),
     ];
     for &(colors, expected_data) in &test_data {
-        let nodes: Vec<_> = colors.iter().map(|&(color_data, count)| Grouped { data: Color { data: color_data }, count: count }).collect();
+        let nodes: Vec<_> = colors.iter().map(|&(color_data, count)| Grouped { data: Rgba8 { data: Pixel { data: color_data } }, count: count }).collect();
         let vector: Vec<_> = nodes.iter().collect();
-        let expected_mean = Color { data: expected_data };
-        let result = Grouped::<Color>::mean_of(&vector);
+        let expected_mean = Rgb5a3 { data: Pixel { data: expected_data } };
+        let result = Grouped::mean_of(&vector);
         assert_eq!(expected_mean, result);
     }
 }
