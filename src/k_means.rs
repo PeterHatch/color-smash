@@ -15,11 +15,9 @@ pub trait SimpleInput<O: Output> : Eq + Hash + Copy + Debug {
     }
 }
 
-pub trait GroupInput<O: Output> {
+pub trait Input<O: Output> : SimpleInput<O> {
     fn mean_of(data_and_counts: &Vec<&Self>) -> O;
 }
-
-pub trait Input<O: Output> : SimpleInput<O> + GroupInput<O> {}
 
 pub trait Output : Eq + Hash + Copy + Debug {}
 

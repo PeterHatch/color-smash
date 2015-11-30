@@ -41,8 +41,7 @@ fn main() {
 
 fn quantize_image(image: &RgbaImage) -> HashMap<Pixel, Pixel> {
     let colors = image.pixels().map(|&color| {
-        let (r, g, b, a) = color.channels4();
-        Rgba8::new(r, g, b, a)
+        Rgba8::new(color.channels4())
     });
     let grouped_colors = k_means::collect_groups::<_, Rgb5a3>(colors);
     let (centroids, grouped_colors_per_centroid): (Vec<Rgb5a3>, _) = k_means::quantize(&grouped_colors);
