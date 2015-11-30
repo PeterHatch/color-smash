@@ -1,6 +1,8 @@
 use std::collections::HashMap;
+use std::collections::hash_state::DefaultState;
 use std::fmt::Debug;
 use std::hash::Hash;
+use std::hash::SipHasher;
 
 pub trait SimpleInput<O: Output> : Eq + Hash + Copy + Debug {
     fn distance_to(&self, other: &O) -> u64;
@@ -32,7 +34,7 @@ pub fn collect_groups<I, O>(items: I) -> Vec<Grouped<I::Item>>
           I::Item: SimpleInput<O>,
           O: Output {
 
-    let mut count_of_items: HashMap<I::Item, u32> = HashMap::new();
+    let mut count_of_items: HashMap<I::Item, u32, DefaultState<SipHasher>> = Default::default();
     for item in items {
         let counter = count_of_items.entry(item).or_insert(0);
         *counter += 1;
