@@ -5,3 +5,4 @@ authors = ["Peter Hatch <petershatch@gmail.com>"]
 
 [dependencies]
 image = "*"
+getopts = "*"
