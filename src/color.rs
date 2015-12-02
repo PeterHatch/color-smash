@@ -1,10 +1,10 @@
-extern crate image;
-use image::Pixel as PixelTrait;
+use image_lib;
+use image_lib::Pixel as PixelTrait;
 
 use byte_utils::*;
 use k_means::{SimpleInput, Input, Output, Grouped};
 
-pub type Pixel = image::Rgba<u8>;
+pub type Pixel = image_lib::Rgba<u8>;
 
 pub trait Color {
     fn new(components: (u8, u8, u8, u8)) -> Self;
