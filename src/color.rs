@@ -75,47 +75,50 @@ impl Color for Rgb5a3 {
     }
 }
 
-impl SimpleInput<Rgba8> for Rgba8 {
-    fn distance_to(&self, other: &Rgba8) -> u64 {
-        self.simple_distance_to(other)
-    }
+// impl SimpleInput<Rgba8> for Rgba8 {
+//     fn distance_to(&self, other: &Rgba8) -> u64 {
+//         self.simple_distance_to(other)
+//     }
 
-    fn as_output(&self) -> Rgba8 {
-        *self
-    }
-}
+//     fn as_output(&self) -> Rgba8 {
+//         *self
+//     }
+// }
 
-impl SimpleInput<Rgb5a3> for Rgba8 {
-    fn distance_to(&self, other: &Rgb5a3) -> u64 {
-        let closest_possible_distance = self.simple_distance_to::<Rgb5a3>(&self.as_output());
+impl<O: Color + Output> SimpleInput<O> for Rgba8 {
+    fn distance_to(&self, other: &O) -> u64 {
+        let closest_possible_distance = self.simple_distance_to::<O>(&self.as_output());
         self.simple_distance_to(other) - closest_possible_distance
     }
 
-    fn as_output(&self) -> Rgb5a3 {
-        Rgb5a3::new(self.components())
+    fn as_output(&self) -> O {
+        O::new(self.components())
     }
 }
 
-impl Input<Rgba8> for Grouped<Rgba8> {
-    fn mean_of(grouped_colors: &Vec<&Grouped<Rgba8>>) -> Rgba8 {
-        Rgba8::new(mean_of_colors(grouped_colors))
+impl<O: Color + Output> Input<O> for Grouped<Rgba8> {
+    fn mean_of(grouped_colors: &Vec<&Grouped<Rgba8>>) -> O {
+        O::new(mean_of_colors_as_vec(grouped_colors))
     }
 }
 
-impl Input<Rgb5a3> for Grouped<Rgba8> {
-    fn mean_of(grouped_colors: &Vec<&Grouped<Rgba8>>) -> Rgb5a3 {
-        Rgb5a3::new(mean_of_colors(grouped_colors))
-    }
+impl Output for Rgba8 {}
+impl Output for Rgb5a3 {}
+
+fn mean_of_colors_as_vec(grouped_colors: &Vec<&Grouped<Rgba8>>) -> (u8, u8, u8, u8) {
+    mean_of_colors(grouped_colors.iter().map(|&&group| group))
 }
 
-fn mean_of_colors(grouped_colors: &Vec<&Grouped<Rgba8>>) -> (u8, u8, u8, u8) {
+
+pub fn mean_of_colors<I>(grouped_colors: I) -> (u8, u8, u8, u8)
+    where I: Iterator<Item = Grouped<Rgba8>> {
     let mut r_sum = 0;
     let mut g_sum = 0;
     let mut b_sum = 0;
     let mut a_sum = 0;
     let mut total_count = 0;
 
-    for &&Grouped { data, count } in grouped_colors {
+    for Grouped { data, count } in grouped_colors {
         let (r, g, b, a) = data.components();
         let weighted_a = (a as u32) * count;
 
@@ -137,6 +140,3 @@ fn mean_of_colors(grouped_colors: &Vec<&Grouped<Rgba8>>) -> (u8, u8, u8, u8) {
         (0, 0, 0, 0)
     }
 }
-
-impl Output for Rgba8 {}
-impl Output for Rgb5a3 {}

@@ -4,7 +4,7 @@ use std::fmt::Debug;
 use std::hash::Hash;
 use std::hash::SipHasher;
 
-pub trait SimpleInput<O: Output> : Eq + Hash + Copy + Debug {
+pub trait SimpleInput<O: Output> : Eq + Hash + Clone + Debug {
     fn distance_to(&self, other: &O) -> u64;
     fn as_output(&self) -> O;
     fn nearest(&self, centroids: &Vec<O>) -> u32 {
@@ -19,7 +19,7 @@ pub trait Input<O: Output> : SimpleInput<O> {
     fn mean_of(data_and_counts: &Vec<&Self>) -> O;
 }
 
-pub trait Output : Eq + Hash + Copy + Debug {}
+pub trait Output : Eq + Hash + Clone + Debug {}
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
 pub struct Grouped<T> {
