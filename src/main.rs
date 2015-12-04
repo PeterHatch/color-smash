@@ -12,6 +12,7 @@ use getopts::{Matches, Options};
 
 mod byte_utils;
 mod color;
+mod color_set;
 mod k_means;
 mod image;
 
@@ -39,7 +40,11 @@ fn main() {
     let input_path = Path::new(&matches.free[0]);
     let output_pathbuf = get_output_path(input_path, &matches);
 
-    image::quantize_image(&input_path, output_pathbuf.as_path());
+    let result = image::quantize_image(&input_path, output_pathbuf.as_path());
+    if let Err(error) = result {
+        println!("{}", error);
+        std::process::exit(1);
+    }
 }
 
 fn initialize_options() -> Options {

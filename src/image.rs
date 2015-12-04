@@ -2,18 +2,12 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use image_lib;
-use image_lib::{GenericImage, RgbaImage, Pixel as PixelTrait};
+use image_lib::{GenericImage, RgbaImage, Pixel as PixelTrait, ImageError};
 
 use color::{Color, Pixel, Rgba8, Rgb5a3};
 
-pub fn quantize_image(input_file: &Path, output_file: &Path) {
-    let mut image = match image_lib::open(input_file) {
-        Ok(image) => { image }
-        Err(_) => {
-            println!("Could not open {} as an image.", input_file.to_string_lossy());
-            ::std::process::exit(1);
-        }
-    };
+pub fn quantize_image(input_file: &Path, output_file: &Path) -> Result<(), ImageError> {
+    let mut image = try!(image_lib::open(input_file));
     let mut image = image.as_mut_rgba8().unwrap();
 
     let quantization_map = create_quantization_map(&image);
@@ -32,7 +26,8 @@ pub fn quantize_image(input_file: &Path, output_file: &Path) {
         *pixel = new_color;
     }
 
-    image.save(output_file);
+    try!(image.save(output_file));
+    Result::Ok(())
 }
 
 pub fn create_quantization_map(image: &RgbaImage) -> HashMap<Pixel, Pixel> {
