@@ -15,6 +15,7 @@ mod color;
 mod color_set;
 mod k_means;
 mod image;
+mod image_set;
 
 #[cfg(test)]
 mod tests;
@@ -34,13 +35,20 @@ fn main() {
         print_usage(program, options);
         return;
     }
-    if matches.free.is_empty() {
-        exit_with_bad_args("No input file specified.", program, options);
-    }
-    let input_path = Path::new(&matches.free[0]);
-    let output_pathbuf = get_output_path(input_path, &matches);
 
-    let result = image::quantize_image(&input_path, output_pathbuf.as_path());
+    let result = match matches.free.len() {
+        0 => { exit_with_bad_args("No input file specified.", program, options) }
+        1 => {
+            let input_path = Path::new(&matches.free[0]);
+            let output_pathbuf = get_output_path(input_path, &matches);
+            image::quantize_image(&input_path, output_pathbuf.as_path())
+        }
+        _ => {
+            let input_paths: Vec<&Path> = matches.free.iter().map(|input_string| Path::new(input_string)).collect();
+            let output_pathbufs: Vec<PathBuf> = input_paths.iter().map(|input_path| get_output_path(input_path, &matches)).collect();
+            image_set::quantize(input_paths.into_iter(), output_pathbufs.iter().map(|o| o.as_path()))
+        }
+    };
     if let Err(error) = result {
         println!("{}", error);
         std::process::exit(1);
