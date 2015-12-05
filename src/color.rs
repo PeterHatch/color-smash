@@ -88,7 +88,14 @@ impl Color for Rgb5a3 {
 impl<O: Color + Output> SimpleInput<O> for Rgba8 {
     fn distance_to(&self, other: &O) -> u64 {
         let closest_possible_distance = self.simple_distance_to::<O>(&self.as_output());
-        self.simple_distance_to(other) - closest_possible_distance
+        let distance = self.simple_distance_to(other);
+
+        if distance < closest_possible_distance {
+            println!("Distance from {:?} to {:?} is closer than to RGB5A3 version {:?}", self, other, SimpleInput::<O>::as_output(self));
+            return 0;
+        }
+
+        distance - closest_possible_distance
     }
 
     fn as_output(&self) -> O {
