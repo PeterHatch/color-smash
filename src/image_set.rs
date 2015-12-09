@@ -5,9 +5,11 @@ use image_lib;
 use image_lib::{GenericImage, RgbaImage, Pixel as PixelTrait, ImageError};
 
 use color_set::ColorSet;
-use color::{Color, Pixel, Rgba8, Rgb5a3};
+use color::{Color, ColorType, Pixel, Rgba8, Rgb5a3};
 
-pub fn quantize<'a, 'b, I, O>(input_paths: I, output_paths: O) -> Result<(), ImageError>
+use k_means::Output;
+
+pub fn quantize<'a, 'b, I, O>(input_paths: I, output_paths: O, colortype: ColorType) -> Result<(), ImageError>
     where I: Iterator<Item = &'a Path>,
           O: Iterator<Item = &'b Path> {
 
@@ -18,7 +20,7 @@ pub fn quantize<'a, 'b, I, O>(input_paths: I, output_paths: O) -> Result<(), Ima
     }
     let mut images: Vec<_> = images.iter_mut().map(|image| image.as_mut_rgba8().unwrap()).collect();
 
-    let quantization_map = create_quantization_map(&images);
+    let quantization_map = create_quantization_map(&images, colortype);
 
     // Temp diagnostic output
     {
@@ -48,7 +50,20 @@ pub fn quantize<'a, 'b, I, O>(input_paths: I, output_paths: O) -> Result<(), Ima
     Result::Ok(())
 }
 
-pub fn create_quantization_map(images: &Vec<&mut RgbaImage>) -> HashMap<Vec<Pixel>, Vec<Pixel>> {
+pub fn create_quantization_map(images: &Vec<&mut RgbaImage>, colortype: ColorType) -> HashMap<Vec<Pixel>, Vec<Pixel>> {
+    let color_sets = get_color_sets(images);
+
+    match colortype {
+        ColorType::Rgba8 => {
+            quantize_to::<Rgba8>(color_sets)
+        }
+        ColorType::Rgb5a3 => {
+            quantize_to::<Rgb5a3>(color_sets)
+        }
+    }
+}
+
+fn get_color_sets(images: &Vec<&mut RgbaImage>) -> Vec<ColorSet<Rgba8>> {
     let width = images[0].width();
     let height = images[0].height();
 
@@ -60,8 +75,12 @@ pub fn create_quantization_map(images: &Vec<&mut RgbaImage>) -> HashMap<Vec<Pixe
         }
     }
 
-    let grouped_color_sets = ::k_means::collect_groups::<_, ColorSet<Rgb5a3>>(color_sets.into_iter());
-    let (centroids, grouped_color_sets_per_centroid): (Vec<ColorSet<Rgb5a3>>, _) = ::k_means::quantize(&grouped_color_sets);
+    color_sets
+}
+
+fn quantize_to<T: Color + Output>(color_sets: Vec<ColorSet<Rgba8>>) -> HashMap<Vec<Pixel>, Vec<Pixel>> {
+    let grouped_color_sets = ::k_means::collect_groups::<_, ColorSet<T>>(color_sets.into_iter());
+    let (centroids, grouped_color_sets_per_centroid): (Vec<ColorSet<T>>, _) = ::k_means::quantize(&grouped_color_sets);
 
     let mut quantization_map = HashMap::new();
 

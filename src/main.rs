@@ -3,6 +3,7 @@
 #![feature(hashmap_hasher)]
 
 use std::env;
+use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
 extern crate image as image_lib;
@@ -12,6 +13,7 @@ use getopts::{Matches, Options};
 
 mod byte_utils;
 mod color;
+use color::ColorType;
 mod color_set;
 mod k_means;
 mod image;
@@ -36,17 +38,32 @@ fn main() {
         return;
     }
 
+    let colortype = match matches.opt_str("colortype") {
+        Some(string) => {
+            let colortype = string.to_uppercase();
+            match colortype.deref() {
+                "RGBA8" => { ColorType::Rgba8 }
+                "RGB5A3" => { ColorType::Rgb5a3 }
+                _ => {
+                    println!("Unknown color type {}", string);
+                    std::process::exit(1);
+                }
+            }
+        }
+        None => { ColorType::Rgba8 }
+    };
+
     let result = match matches.free.len() {
         0 => { exit_with_bad_args("No input file specified.", program, options) }
         1 => {
             let input_path = Path::new(&matches.free[0]);
             let output_pathbuf = get_output_path(input_path, &matches);
-            image::quantize_image(&input_path, output_pathbuf.as_path())
+            image::quantize_image(&input_path, output_pathbuf.as_path(), colortype)
         }
         _ => {
             let input_paths: Vec<&Path> = matches.free.iter().map(|input_string| Path::new(input_string)).collect();
             let output_pathbufs: Vec<PathBuf> = input_paths.iter().map(|input_path| get_output_path(input_path, &matches)).collect();
-            image_set::quantize(input_paths.into_iter(), output_pathbufs.iter().map(|o| o.as_path()))
+            image_set::quantize(input_paths.into_iter(), output_pathbufs.iter().map(|o| o.as_path()), colortype)
         }
     };
     if let Err(error) = result {
@@ -60,6 +77,7 @@ fn initialize_options() -> Options {
 
     options.optflag("h", "help", "print this help message.");
     options.optopt("s", "suffix", "set custom suffix for output filenames.", "SUFFIX");
+    options.optopt("c", "colortype", "set output to RGBA8 (default) or RGB5A3.", "TYPE");
 
     options
 }

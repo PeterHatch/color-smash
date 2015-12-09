@@ -4,6 +4,11 @@ use image_lib::Pixel as PixelTrait;
 use byte_utils::*;
 use k_means::{SimpleInput, Input, Output, Grouped};
 
+pub enum ColorType {
+    Rgba8,
+    Rgb5a3,
+}
+
 pub type Pixel = image_lib::Rgba<u8>;
 
 pub trait Color {
