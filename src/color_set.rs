@@ -16,7 +16,7 @@ impl<T: Color> ColorSet<T> {
 }
 
 impl<O: Color + Output> SimpleInput<ColorSet<O>> for ColorSet<Rgba8> {
-    fn distance_to(&self, other: &ColorSet<O>) -> u64 {
+    fn distance_to(&self, other: &ColorSet<O>) -> f64 {
         self.colors.iter().zip(other.colors.iter()).map(|(c1, c2)| c1.distance_to(c2)).sum()
     }
 

@@ -70,7 +70,7 @@ fn get_color_sets(images: &Vec<&mut RgbaImage>) -> Vec<ColorSet<Rgba8>> {
     let mut color_sets: Vec<ColorSet<Rgba8>> = Vec::with_capacity((width as usize) * (height as usize));
     for y in 0..height {
         for x in 0..width {
-            let color_set = ColorSet::new(images.iter().map(|image| Rgba8::new(image.get_pixel(x, y).channels4())).collect());
+            let color_set = ColorSet::new(images.iter().map(|image| Rgba8::from(*image.get_pixel(x, y))).collect());
             color_sets.push(color_set);
         }
     }

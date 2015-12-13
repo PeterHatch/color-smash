@@ -5,10 +5,21 @@ use std::hash::Hash;
 use std::hash::SipHasher;
 
 pub trait SimpleInput<O: Output> : Eq + Hash + Clone + Debug {
-    fn distance_to(&self, other: &O) -> u64;
+    fn distance_to(&self, other: &O) -> f64;
     fn as_output(&self) -> O;
     fn nearest(&self, centroids: &Vec<O>) -> u32 {
-        centroids.iter().zip(0..).min_by(|&(centroid, _)| self.distance_to(centroid)).unwrap().1
+        let mut centroids = centroids.iter();
+        let first = centroids.next().unwrap();
+        let first_distance = self.distance_to(first);
+        let (_, _, index) = centroids.zip(1..).fold((first, first_distance, 0), |(min_centroid, min_distance, min_index), (centroid, index)| {
+            let distance = self.distance_to(centroid);
+            if distance < min_distance {
+                (centroid, distance, index)
+            } else {
+                (min_centroid, min_distance, min_index)
+            }
+        });
+        index
     }
     fn count(&self) -> u32 {
         1
@@ -42,7 +53,7 @@ pub fn collect_groups<I, O>(items: I) -> Vec<Grouped<I::Item>>
 }
 
 impl<T: SimpleInput<O>, O: Output> SimpleInput<O> for Grouped<T> {
-    fn distance_to(&self, other: &O) -> u64 {
+    fn distance_to(&self, other: &O) -> f64 {
         self.data.distance_to(other)
     }
     fn as_output(&self) -> O {
@@ -100,34 +111,69 @@ fn initialize_centroids<I: Input<O>, O: Output>(k: usize, nodes: &Vec<I>) -> Vec
     let mut centroid_per_node: Vec<_> = vec![0; nodes.len()];
 
     let mut distance_per_centroid: Vec<_> = Vec::with_capacity(k);
-    let distance_to_first_centroid = nodes.iter().zip(distance_per_node.iter()).map(|(node, distance)| distance * (node.count() as u64)).sum();
+    let distance_to_first_centroid = nodes.iter().zip(distance_per_node.iter()).map(|(node, distance)| distance * (node.count() as f64)).sum();
     distance_per_centroid.push(distance_to_first_centroid);
 
     while centroids.len() < k {
-        let centroid_to_split = distance_per_centroid.iter().zip(0..).max_by(|&(distance, _index)| distance).unwrap().1;
-        let furthest_node_index = distance_per_node.iter().zip(centroid_per_node.iter()).zip(0..).filter(|&((_, centroid), _)| *centroid == centroid_to_split).max_by(|&((distance, _), _)| distance).unwrap().1;
-        let new_centroid = nodes[furthest_node_index].as_output();
+        let centroid_to_split = index_of_worst_centroid(&distance_per_centroid);
+        let farthest_node_index = farthest_node_of(centroid_to_split, &centroid_per_node, &distance_per_node);
+        let new_centroid = nodes[farthest_node_index].as_output();
 
         if let Some(_) = centroids.iter().find(|&centroid| *centroid == new_centroid) {
             println!("Created duplicate centroid: {:?}", new_centroid);
         }
 
         let new_centroid_index = centroids.len();
-        distance_per_centroid.push(0);
+        distance_per_centroid.push(0.0);
 
         for ((node, distance), centroid) in nodes.iter().zip(distance_per_node.iter_mut()).zip(centroid_per_node.iter_mut()) {
             let new_distance = node.distance_to(&new_centroid);
             if new_distance < *distance {
-                distance_per_centroid[*centroid] -= *distance * (node.count() as u64);
+                distance_per_centroid[*centroid] -= *distance * (node.count() as f64);
                 *centroid = new_centroid_index;
                 *distance = new_distance;
-                distance_per_centroid[new_centroid_index] += new_distance * (node.count() as u64);
+                distance_per_centroid[new_centroid_index] += new_distance * (node.count() as f64);
             }
         }
         centroids.push(new_centroid);
     }
 
     centroids
+}
+
+fn index_of_worst_centroid(distance_per_centroid: &Vec<f64>) -> usize {
+    let mut distance_iter = distance_per_centroid.iter().zip(0..);
+    let first = distance_iter.next().unwrap();
+    let (_distance, index) = distance_iter.fold(first, |(max_distance, max_index), (distance, index)| {
+        if distance > max_distance {
+            (distance, index)
+        } else {
+            (max_distance, max_index)
+        }
+    });
+    index
+}
+
+fn farthest_node_of(centroid_index: usize, centroid_per_node: &Vec<usize>, distance_per_node: &Vec<f64>) -> usize {
+    let node_indexes = centroid_per_node.iter().zip(0..).filter_map(|(&centroid, node_index)| {
+        if centroid == centroid_index {
+            Some(node_index)
+        } else {
+            None
+        }
+    });
+
+    let mut distances_and_indexes = node_indexes.map(|i| (distance_per_node[i], i));
+    let first = distances_and_indexes.next().unwrap();
+    let (_distance, index) = distances_and_indexes.fold(first, |(max_distance, max_index), (distance, index)| {
+        if distance > max_distance {
+            (distance, index)
+        } else {
+            (max_distance, max_index)
+        }
+    });
+
+    index
 }
 
 fn find_nearest_centroids<'a, 'b, I: Input<O>, O: Output>(centroids: &'a Vec<O>, nodes: &'b Vec<I>) -> Vec<Vec<&'b I>> {

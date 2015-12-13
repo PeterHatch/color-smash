@@ -34,7 +34,7 @@ pub fn quantize_image(input_file: &Path, output_file: &Path, colortype: ColorTyp
 
 pub fn create_quantization_map(image: &RgbaImage, colortype: ColorType) -> HashMap<Pixel, Pixel> {
     let colors = image.pixels().map(|&color| {
-        Rgba8::new(color.channels4())
+        Rgba8::from(color)
     });
 
     match colortype {
