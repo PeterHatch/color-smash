@@ -18,6 +18,7 @@ mod color_set;
 mod k_means;
 mod image;
 mod image_set;
+mod numeric_float;
 
 #[cfg(test)]
 mod tests;

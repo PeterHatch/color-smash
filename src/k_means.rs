@@ -4,21 +4,14 @@ use std::fmt::Debug;
 use std::hash::Hash;
 use std::hash::SipHasher;
 
+use numeric_float::n64;
+
 pub trait SimpleInput<O: Output> : Eq + Hash + Clone + Debug {
     fn distance_to(&self, other: &O) -> f64;
     fn as_output(&self) -> O;
     fn nearest(&self, centroids: &Vec<O>) -> u32 {
-        let mut centroids = centroids.iter();
-        let first = centroids.next().unwrap();
-        let first_distance = self.distance_to(first);
-        let (_, _, index) = centroids.zip(1..).fold((first, first_distance, 0), |(min_centroid, min_distance, min_index), (centroid, index)| {
-            let distance = self.distance_to(centroid);
-            if distance < min_distance {
-                (centroid, distance, index)
-            } else {
-                (min_centroid, min_distance, min_index)
-            }
-        });
+        let centroids_and_indexes = centroids.iter().zip(0..);
+        let (_centroid, index) = centroids_and_indexes.min_by(|&(centroid, _index)| -> n64 { self.distance_to(centroid).into() }).unwrap();
         index
     }
     fn count(&self) -> u32 {
@@ -142,15 +135,8 @@ fn initialize_centroids<I: Input<O>, O: Output>(k: usize, nodes: &Vec<I>) -> Vec
 }
 
 fn index_of_worst_centroid(distance_per_centroid: &Vec<f64>) -> usize {
-    let mut distance_iter = distance_per_centroid.iter().zip(0..);
-    let first = distance_iter.next().unwrap();
-    let (_distance, index) = distance_iter.fold(first, |(max_distance, max_index), (distance, index)| {
-        if distance > max_distance {
-            (distance, index)
-        } else {
-            (max_distance, max_index)
-        }
-    });
+    let distances_and_indexes = distance_per_centroid.iter().zip(0..);
+    let (_distance, index) = distances_and_indexes.max_by(|&(&distance, _index)| -> n64 { distance.into() }).unwrap();
     index
 }
 
@@ -162,17 +148,8 @@ fn farthest_node_of(centroid_index: usize, centroid_per_node: &Vec<usize>, dista
             None
         }
     });
-
-    let mut distances_and_indexes = node_indexes.map(|i| (distance_per_node[i], i));
-    let first = distances_and_indexes.next().unwrap();
-    let (_distance, index) = distances_and_indexes.fold(first, |(max_distance, max_index), (distance, index)| {
-        if distance > max_distance {
-            (distance, index)
-        } else {
-            (max_distance, max_index)
-        }
-    });
-
+    let distances_and_indexes = node_indexes.map(|i| (distance_per_node[i], i));
+    let (_distance, index) = distances_and_indexes.max_by(|&(distance, _index)| -> n64 { distance.into() }).unwrap();
     index
 }
 
