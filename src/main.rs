@@ -29,8 +29,8 @@ fn main() {
     let options = initialize_options();
 
     let matches = match options.parse(args) {
-        Ok(matches) => { matches }
-        Err(error) => { exit_with_bad_args(&error.to_string(), program, options) }
+        Ok(matches) => matches,
+        Err(error) => exit_with_bad_args(&error.to_string(), program, options),
     };
 
     if matches.opt_present("help") {
@@ -42,28 +42,37 @@ fn main() {
         Some(string) => {
             let colortype = string.to_uppercase();
             match colortype.deref() {
-                "RGBA8" => { ColorType::Rgba8 }
-                "RGB5A3" => { ColorType::Rgb5a3 }
+                "RGBA8" => ColorType::Rgba8,
+                "RGB5A3" => ColorType::Rgb5a3,
                 _ => {
                     println!("Unknown color type {}", string);
                     std::process::exit(1);
                 }
             }
         }
-        None => { ColorType::Rgba8 }
+        None => ColorType::Rgba8,
     };
 
     let result = match matches.free.len() {
-        0 => { exit_with_bad_args("No input file specified.", program, options) }
+        0 => exit_with_bad_args("No input file specified.", program, options),
         1 => {
             let input_path = Path::new(&matches.free[0]);
             let output_pathbuf = get_output_path(input_path, &matches);
             image::quantize_image(&input_path, output_pathbuf.as_path(), colortype)
         }
         _ => {
-            let input_paths: Vec<&Path> = matches.free.iter().map(|input_string| Path::new(input_string)).collect();
-            let output_pathbufs: Vec<PathBuf> = input_paths.iter().map(|input_path| get_output_path(input_path, &matches)).collect();
-            image_set::quantize(input_paths.into_iter(), output_pathbufs.iter().map(|o| o.as_path()), colortype)
+            let input_paths: Vec<&Path> = matches.free
+                                                 .iter()
+                                                 .map(|input_string| Path::new(input_string))
+                                                 .collect();
+            let output_pathbufs: Vec<PathBuf> = input_paths.iter()
+                                                           .map(|input_path| {
+                                                               get_output_path(input_path, &matches)
+                                                           })
+                                                           .collect();
+            image_set::quantize(input_paths.into_iter(),
+                                output_pathbufs.iter().map(|o| o.as_path()),
+                                colortype)
         }
     };
     if let Err(error) = result {
@@ -76,8 +85,14 @@ fn initialize_options() -> Options {
     let mut options = Options::new();
 
     options.optflag("h", "help", "print this help message.");
-    options.optopt("s", "suffix", "set custom suffix for output filenames.", "SUFFIX");
-    options.optopt("c", "colortype", "set output to RGBA8 (default) or RGB5A3.", "TYPE");
+    options.optopt("s",
+                   "suffix",
+                   "set custom suffix for output filenames.",
+                   "SUFFIX");
+    options.optopt("c",
+                   "colortype",
+                   "set output to RGBA8 (default) or RGB5A3.",
+                   "TYPE");
 
     options
 }
@@ -96,8 +111,8 @@ fn exit_with_bad_args(error: &str, program: &str, options: Options) -> ! {
 fn get_output_path(input_file: &Path, matches: &Matches) -> PathBuf {
     let stem = input_file.file_stem().unwrap();
     let output_suffix = match matches.opt_str("suffix") {
-        Some(suffix) => { suffix }
-        None => { " (smashed)".to_string() }
+        Some(suffix) => suffix,
+        None => " (smashed)".to_string(),
     };
     let output_extension = ".png";
     let output_name = stem.to_string_lossy().into_owned() + &output_suffix + output_extension;

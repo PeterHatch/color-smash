@@ -85,13 +85,21 @@ fn color_distance_test() {
 
 #[test]
 fn color_mean_test() {
-    let test_data = [
-        ([([0xFF, 0x80, 0x00, 0xFF], 1), ([0x00, 0x00, 0x00, 0xFF], 1)], [0x80, 0x40, 0x00, 0xFF]),
-        ([([0xFF, 0xFF, 0xFF, 0x00], 1), ([0x80, 0x80, 0x80, 0x00], 1)], [0x00, 0x00, 0x00, 0x00]),
-        ([([0xFF, 0x80, 0x00, 0x80], 2), ([0x00, 0x00, 0x00, 0xFF], 1)], [0x80, 0x40, 0x00, 0xAA]),
-    ];
+    let test_data = [([([0xFF, 0x80, 0x00, 0xFF], 1), ([0x00, 0x00, 0x00, 0xFF], 1)],
+                      [0x80, 0x40, 0x00, 0xFF]),
+                     ([([0xFF, 0xFF, 0xFF, 0x00], 1), ([0x80, 0x80, 0x80, 0x00], 1)],
+                      [0x00, 0x00, 0x00, 0x00]),
+                     ([([0xFF, 0x80, 0x00, 0x80], 2), ([0x00, 0x00, 0x00, 0xFF], 1)],
+                      [0x80, 0x40, 0x00, 0xAA])];
     for &(colors, expected_data) in &test_data {
-        let nodes: Vec<_> = colors.iter().map(|&(color_data, count)| Grouped { data: Rgba8 { data: Pixel { data: color_data } }, count: count }).collect();
+        let nodes: Vec<_> = colors.iter()
+                                  .map(|&(color_data, count)| {
+                                      Grouped {
+                                          data: Rgba8 { data: Pixel { data: color_data } },
+                                          count: count,
+                                      }
+                                  })
+                                  .collect();
         let vector: Vec<_> = nodes.iter().collect();
         let expected_mean = Rgba8 { data: Pixel { data: expected_data } };
         let result = Grouped::mean_of(&vector);

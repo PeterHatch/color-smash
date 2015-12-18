@@ -11,7 +11,11 @@ pub trait SimpleInput<O: Output> : Eq + Hash + Clone + Debug {
     fn as_output(&self) -> O;
     fn nearest(&self, centroids: &Vec<O>) -> u32 {
         let centroids_and_indexes = centroids.iter().zip(0..);
-        let (_centroid, index) = centroids_and_indexes.min_by_key(|&(centroid, _index)| -> n64 { self.distance_to(centroid).into() }).unwrap();
+        let (_centroid, index) =
+            centroids_and_indexes.min_by_key(|&(centroid, _index)| -> n64 {
+                                     self.distance_to(centroid).into()
+                                 })
+                                 .unwrap();
         index
     }
     fn count(&self) -> u32 {
@@ -34,7 +38,8 @@ pub struct Grouped<T> {
 pub fn collect_groups<I, O>(items: I) -> Vec<Grouped<I::Item>>
     where I: Iterator,
           I::Item: SimpleInput<O>,
-          O: Output {
+          O: Output
+{
 
     let mut count_of_items: HashMap<I::Item, u32, DefaultState<SipHasher>> = Default::default();
     for item in items {
@@ -42,7 +47,14 @@ pub fn collect_groups<I, O>(items: I) -> Vec<Grouped<I::Item>>
         *counter += 1;
     }
 
-    count_of_items.into_iter().map(|(item, count)| { Grouped { data: item, count: count } }).collect()
+    count_of_items.into_iter()
+                  .map(|(item, count)| {
+                      Grouped {
+                          data: item,
+                          count: count,
+                      }
+                  })
+                  .collect()
 }
 
 impl<T: SimpleInput<O>, O: Output> SimpleInput<O> for Grouped<T> {
@@ -100,16 +112,23 @@ fn initialize_centroids<I: Input<O>, O: Output>(k: usize, nodes: &Vec<I>) -> Vec
     let first_centroid = nodes.iter().max_by_key(|node| node.count()).unwrap().as_output();
     centroids.push(first_centroid);
 
-    let mut distance_per_node: Vec<_> = nodes.iter().map(|node| node.distance_to(&centroids[0])).collect();
+    let mut distance_per_node: Vec<_> = nodes.iter()
+                                             .map(|node| node.distance_to(&centroids[0]))
+                                             .collect();
     let mut centroid_per_node: Vec<_> = vec![0; nodes.len()];
 
     let mut distance_per_centroid: Vec<_> = Vec::with_capacity(k);
-    let distance_to_first_centroid = nodes.iter().zip(distance_per_node.iter()).map(|(node, distance)| distance * (node.count() as f64)).sum();
+    let distance_to_first_centroid = nodes.iter()
+                                          .zip(distance_per_node.iter())
+                                          .map(|(node, distance)| distance * (node.count() as f64))
+                                          .sum();
     distance_per_centroid.push(distance_to_first_centroid);
 
     while centroids.len() < k {
         let centroid_to_split = index_of_worst_centroid(&distance_per_centroid);
-        let farthest_node_index = farthest_node_of(centroid_to_split, &centroid_per_node, &distance_per_node);
+        let farthest_node_index = farthest_node_of(centroid_to_split,
+                                                   &centroid_per_node,
+                                                   &distance_per_node);
         let new_centroid = nodes[farthest_node_index].as_output();
 
         if let Some(_) = centroids.iter().find(|&centroid| *centroid == new_centroid) {
@@ -119,7 +138,9 @@ fn initialize_centroids<I: Input<O>, O: Output>(k: usize, nodes: &Vec<I>) -> Vec
         let new_centroid_index = centroids.len();
         distance_per_centroid.push(0.0);
 
-        for ((node, distance), centroid) in nodes.iter().zip(distance_per_node.iter_mut()).zip(centroid_per_node.iter_mut()) {
+        for ((node, distance), centroid) in nodes.iter()
+                                                 .zip(distance_per_node.iter_mut())
+                                                 .zip(centroid_per_node.iter_mut()) {
             let new_distance = node.distance_to(&new_centroid);
             if new_distance < *distance {
                 distance_per_centroid[*centroid] -= *distance * (node.count() as f64);
@@ -136,11 +157,17 @@ fn initialize_centroids<I: Input<O>, O: Output>(k: usize, nodes: &Vec<I>) -> Vec
 
 fn index_of_worst_centroid(distance_per_centroid: &Vec<f64>) -> usize {
     let distances_and_indexes = distance_per_centroid.iter().zip(0..);
-    let (_distance, index) = distances_and_indexes.max_by_key(|&(&distance, _index)| -> n64 { distance.into() }).unwrap();
+    let (_distance, index) = distances_and_indexes.max_by_key(|&(&distance, _index)| -> n64 {
+                                                      distance.into()
+                                                  })
+                                                  .unwrap();
     index
 }
 
-fn farthest_node_of(centroid_index: usize, centroid_per_node: &Vec<usize>, distance_per_node: &Vec<f64>) -> usize {
+fn farthest_node_of(centroid_index: usize,
+                    centroid_per_node: &Vec<usize>,
+                    distance_per_node: &Vec<f64>)
+                    -> usize {
     let node_indexes = centroid_per_node.iter().zip(0..).filter_map(|(&centroid, node_index)| {
         if centroid == centroid_index {
             Some(node_index)
@@ -149,11 +176,16 @@ fn farthest_node_of(centroid_index: usize, centroid_per_node: &Vec<usize>, dista
         }
     });
     let distances_and_indexes = node_indexes.map(|i| (distance_per_node[i], i));
-    let (_distance, index) = distances_and_indexes.max_by_key(|&(distance, _index)| -> n64 { distance.into() }).unwrap();
+    let (_distance, index) = distances_and_indexes.max_by_key(|&(distance, _index)| -> n64 {
+                                                      distance.into()
+                                                  })
+                                                  .unwrap();
     index
 }
 
-fn find_nearest_centroids<'a, 'b, I: Input<O>, O: Output>(centroids: &'a Vec<O>, nodes: &'b Vec<I>) -> Vec<Vec<&'b I>> {
+fn find_nearest_centroids<'a, 'b, I: Input<O>, O: Output>(centroids: &'a Vec<O>,
+                                                          nodes: &'b Vec<I>)
+                                                          -> Vec<Vec<&'b I>> {
     let mut nodes_per_centroid = vec![Vec::new(); centroids.len()];
 
     for node in nodes {
@@ -164,7 +196,8 @@ fn find_nearest_centroids<'a, 'b, I: Input<O>, O: Output>(centroids: &'a Vec<O>,
     nodes_per_centroid
 }
 
-fn reposition_centroids<I: Input<O>, O: Output>(centroids: &mut Vec<O>, nodes_per_centroid: &Vec<Vec<&I>>) {
+fn reposition_centroids<I: Input<O>, O: Output>(centroids: &mut Vec<O>,
+                                                nodes_per_centroid: &Vec<Vec<&I>>) {
     for (centroid, nodes) in centroids.iter_mut().zip(nodes_per_centroid.iter()) {
         *centroid = I::mean_of(nodes);
     }

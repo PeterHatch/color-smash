@@ -33,12 +33,17 @@ impl<O: Color + Output> Input<ColorSet<O>> for Grouped<ColorSet<Rgba8>> {
 
 fn mean_of<O: Color + Output>(grouped_colorsets: &Vec<&Grouped<ColorSet<Rgba8>>>) -> ColorSet<O> {
     let color_count = grouped_colorsets[0].data.colors.len();
-    let mean_colors = (0..color_count).map(|i| {
-        let color_iter = grouped_colorsets.iter().map(|&group| {
-            Grouped { data: group.data.colors[i], count: group.count }
-        });
-        O::new(::color::mean_of_colors(color_iter))
-    }).collect();
+    let mean_colors = (0..color_count)
+                          .map(|i| {
+                              let color_iter = grouped_colorsets.iter().map(|&group| {
+                                  Grouped {
+                                      data: group.data.colors[i],
+                                      count: group.count,
+                                  }
+                              });
+                              O::new(::color::mean_of_colors(color_iter))
+                          })
+                          .collect();
     ColorSet::new(mean_colors)
 }
 

@@ -8,7 +8,10 @@ use color::{Color, ColorType, Pixel, Rgba8, Rgb5a3};
 
 use k_means::Output;
 
-pub fn quantize_image(input_file: &Path, output_file: &Path, colortype: ColorType) -> Result<(), ImageError> {
+pub fn quantize_image(input_file: &Path,
+                      output_file: &Path,
+                      colortype: ColorType)
+                      -> Result<(), ImageError> {
     let mut image = try!(image_lib::open(input_file));
     let mut image = image.as_mut_rgba8().unwrap();
 
@@ -33,25 +36,21 @@ pub fn quantize_image(input_file: &Path, output_file: &Path, colortype: ColorTyp
 }
 
 pub fn create_quantization_map(image: &RgbaImage, colortype: ColorType) -> HashMap<Pixel, Pixel> {
-    let colors = image.pixels().map(|&color| {
-        Rgba8::from(color)
-    });
+    let colors = image.pixels().map(|&color| Rgba8::from(color));
 
     match colortype {
-        ColorType::Rgba8 => {
-            quantize_to::<_, Rgba8>(colors)
-        }
-        ColorType::Rgb5a3 => {
-            quantize_to::<_, Rgb5a3>(colors)
-        }
+        ColorType::Rgba8 => quantize_to::<_, Rgba8>(colors),
+        ColorType::Rgb5a3 => quantize_to::<_, Rgb5a3>(colors),
     }
 }
 
 fn quantize_to<I, T>(colors: I) -> HashMap<Pixel, Pixel>
     where I: Iterator<Item = Rgba8>,
-          T: Color + Output + Copy {
+          T: Color + Output + Copy
+{
     let grouped_colors = ::k_means::collect_groups::<_, T>(colors);
-    let (centroids, grouped_colors_per_centroid): (Vec<T>, _) = ::k_means::quantize(&grouped_colors);
+    let (centroids, grouped_colors_per_centroid): (Vec<T>, _) =
+        ::k_means::quantize(&grouped_colors);
 
     let mut quantization_map = HashMap::new();
 

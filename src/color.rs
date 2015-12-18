@@ -23,9 +23,7 @@ pub trait Color {
         let (r1, g1, b1, a1) = self.components();
         let (r2, g2, b2, a2) = other.components();
 
-        let opaque_distance = (r1 - r2).powi(2) +
-                              (g1 - g2).powi(2) +
-                              (b1 - b2).powi(2);
+        let opaque_distance = (r1 - r2).powi(2) + (g1 - g2).powi(2) + (b1 - b2).powi(2);
 
         let alpha_distance = (a1 - a2).powi(2) * 3.0;
 
@@ -59,7 +57,10 @@ impl Color for Rgba8 {
 
     fn components(&self) -> (f64, f64, f64, f64) {
         let (r, g, b, a) = self.data.channels4();
-        ((r as f64) / 255.0, (g as f64) / 255.0, (b as f64) / 255.0, (a as f64) / 255.0)
+        ((r as f64) / 255.0,
+         (g as f64) / 255.0,
+         (b as f64) / 255.0,
+         (a as f64) / 255.0)
     }
 }
 
@@ -125,14 +126,18 @@ impl Color for Rgb5a3 {
                 let g = (g_float * 31.0).round() as u16;
                 let b = (b_float * 31.0).round() as u16;
                 (1 << 15) | (r << 10) | (g << 5) | b
-            },
+            }
             1...7 => {
                 let r = (r_float * 15.0).round() as u16;
                 let g = (g_float * 15.0).round() as u16;
                 let b = (b_float * 15.0).round() as u16;
                 (a << 12) | (r << 8) | (g << 4) | b
-            },
-            _ => panic!("Invalid alpha parameter to Rgb5a3::new: {:?} (as 3 bit integer {:?})", a_float, a),
+            }
+            _ => {
+                panic!("Invalid alpha parameter to Rgb5a3::new: {:?} (as 3 bit integer {:?})",
+                       a_float,
+                       a)
+            }
         };
         Rgb5a3 { data: data }
     }
@@ -179,18 +184,18 @@ impl fmt::Debug for Rgb5a3 {
         match self.storage_type() {
             Rgb5a3Type::Rgb5 => {
                 fmt.debug_struct("Rgb5a3 (Rgb5)")
-                    .field("r", &self.r5())
-                    .field("g", &self.g5())
-                    .field("b", &self.b5())
-                    .finish()
+                   .field("r", &self.r5())
+                   .field("g", &self.g5())
+                   .field("b", &self.b5())
+                   .finish()
             }
             Rgb5a3Type::Rgb4a3 => {
                 fmt.debug_struct("Rgb5a3 (Rgb4a3)")
-                    .field("r", &self.r4())
-                    .field("g", &self.g4())
-                    .field("b", &self.b4())
-                    .field("a", &self.a3())
-                    .finish()
+                   .field("r", &self.r4())
+                   .field("g", &self.g4())
+                   .field("b", &self.b4())
+                   .field("a", &self.a3())
+                   .finish()
             }
         }
     }
@@ -212,7 +217,10 @@ impl<O: Color + Output> SimpleInput<O> for Rgba8 {
         let distance = self.simple_distance_to(other);
 
         if distance < closest_possible_distance {
-            println!("Distance from {:?} to {:?} is closer than to RGB5A3 version {:?}", self, other, SimpleInput::<O>::as_output(self));
+            println!("Distance from {:?} to {:?} is closer than to RGB5A3 version {:?}",
+                     self,
+                     other,
+                     SimpleInput::<O>::as_output(self));
             return 0.0;
         }
 
@@ -239,7 +247,8 @@ fn mean_of_colors_as_vec(grouped_colors: &Vec<&Grouped<Rgba8>>) -> (f64, f64, f6
 
 
 pub fn mean_of_colors<I>(grouped_colors: I) -> (f64, f64, f64, f64)
-    where I: Iterator<Item = Grouped<Rgba8>> {
+    where I: Iterator<Item = Grouped<Rgba8>>
+{
     let mut r_sum = 0.0;
     let mut g_sum = 0.0;
     let mut b_sum = 0.0;
