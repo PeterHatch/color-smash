@@ -1,9 +1,9 @@
 Color Smash
 ===========
 
-Color Smash reduces the number of colors in an image to 256, so it could be stored as indexes into a palette.  It can also convert a group of images such that they could be stored as a single set of indexes into a different palette for each image.
+Color Smash reduces the number of colors in an image to 256, so it could be stored as indexes into a palette.  It can also convert a group of images such that they could be stored as a single, shared set of indexes, with a different palette for each image.
 
-This allows efficient storage of images that are basically palette swaps, even for complicated images.  For example, if you have versions of a model that differ only by changing color of the textures, renders of those models could be stored as palette swaps.
+This allows efficient storage of images that are basically the same pattern as each other with different colors.  For example, if you have a game with character costumes that differ only by color, renders of the character with each of the different costumes would work well with this technique.  (Smash Bros. is one example of a game that could have used this, for the images on the character selection screen for picking your outfit.)
 
 Algorithm
 ---------
