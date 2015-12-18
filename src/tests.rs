@@ -1,7 +1,7 @@
 use byte_utils::*;
 use color::*;
 use k_means::*;
-use image::*;
+use image_set::create_quantization_map;
 
 use std::collections::HashSet;
 use std::path::Path;
@@ -113,8 +113,8 @@ fn load_test_image() -> RgbaImage {
 
 #[test]
 fn has_256_colors() {
-    let image = load_test_image();
-    let quantization_map = create_quantization_map(&image, ColorType::Rgb5a3);
+    let mut image = load_test_image();
+    let quantization_map = create_quantization_map(&vec![&mut image], ColorType::Rgb5a3);
     let mut colors = HashSet::new();
     for color in quantization_map.values() {
         colors.insert(color);
@@ -124,11 +124,13 @@ fn has_256_colors() {
 
 #[test]
 fn rgb_is_zero_if_alpha_is() {
-    let image = load_test_image();
-    let quantization_map = create_quantization_map(&image, ColorType::Rgb5a3);
-    for color in quantization_map.values().into_iter().chain(quantization_map.keys().into_iter()) {
-        if color.data[3] == 0 {
-            assert_eq!(color.data, [0, 0, 0, 0]);
+    let mut image = load_test_image();
+    let quantization_map = create_quantization_map(&vec![&mut image], ColorType::Rgb5a3);
+    for colors in quantization_map.values().into_iter().chain(quantization_map.keys().into_iter()) {
+        for color in colors {
+            if color.data[3] == 0 {
+                assert_eq!(color.data, [0, 0, 0, 0]);
+            }
         }
     }
 }

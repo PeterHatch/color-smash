@@ -15,7 +15,6 @@ mod color;
 use color::ColorType;
 mod color_set;
 mod k_means;
-mod image;
 mod image_set;
 mod numeric_float;
 
@@ -55,11 +54,6 @@ fn main() {
 
     let result = match matches.free.len() {
         0 => exit_with_bad_args("No input file specified.", program, options),
-        1 => {
-            let input_path = Path::new(&matches.free[0]);
-            let output_pathbuf = get_output_path(input_path, &matches);
-            image::quantize_image(&input_path, output_pathbuf.as_path(), colortype)
-        }
         _ => {
             let input_paths: Vec<&Path> = matches.free
                                                  .iter()
