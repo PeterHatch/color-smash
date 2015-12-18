@@ -1,4 +1,3 @@
-#![feature(iter_cmp)]
 #![feature(iter_arith)]
 #![feature(hashmap_hasher)]
 

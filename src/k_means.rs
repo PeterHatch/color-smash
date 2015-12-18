@@ -11,7 +11,7 @@ pub trait SimpleInput<O: Output> : Eq + Hash + Clone + Debug {
     fn as_output(&self) -> O;
     fn nearest(&self, centroids: &Vec<O>) -> u32 {
         let centroids_and_indexes = centroids.iter().zip(0..);
-        let (_centroid, index) = centroids_and_indexes.min_by(|&(centroid, _index)| -> n64 { self.distance_to(centroid).into() }).unwrap();
+        let (_centroid, index) = centroids_and_indexes.min_by_key(|&(centroid, _index)| -> n64 { self.distance_to(centroid).into() }).unwrap();
         index
     }
     fn count(&self) -> u32 {
@@ -97,7 +97,7 @@ pub fn quantize<I: Input<O>, O: Output>(nodes: &Vec<I>) -> (Vec<O>, Vec<Vec<&I>>
 
 fn initialize_centroids<I: Input<O>, O: Output>(k: usize, nodes: &Vec<I>) -> Vec<O> {
     let mut centroids = Vec::with_capacity(k);
-    let first_centroid = nodes.iter().max_by(|node| node.count()).unwrap().as_output();
+    let first_centroid = nodes.iter().max_by_key(|node| node.count()).unwrap().as_output();
     centroids.push(first_centroid);
 
     let mut distance_per_node: Vec<_> = nodes.iter().map(|node| node.distance_to(&centroids[0])).collect();
@@ -136,7 +136,7 @@ fn initialize_centroids<I: Input<O>, O: Output>(k: usize, nodes: &Vec<I>) -> Vec
 
 fn index_of_worst_centroid(distance_per_centroid: &Vec<f64>) -> usize {
     let distances_and_indexes = distance_per_centroid.iter().zip(0..);
-    let (_distance, index) = distances_and_indexes.max_by(|&(&distance, _index)| -> n64 { distance.into() }).unwrap();
+    let (_distance, index) = distances_and_indexes.max_by_key(|&(&distance, _index)| -> n64 { distance.into() }).unwrap();
     index
 }
 
@@ -149,7 +149,7 @@ fn farthest_node_of(centroid_index: usize, centroid_per_node: &Vec<usize>, dista
         }
     });
     let distances_and_indexes = node_indexes.map(|i| (distance_per_node[i], i));
-    let (_distance, index) = distances_and_indexes.max_by(|&(distance, _index)| -> n64 { distance.into() }).unwrap();
+    let (_distance, index) = distances_and_indexes.max_by_key(|&(distance, _index)| -> n64 { distance.into() }).unwrap();
     index
 }
 
