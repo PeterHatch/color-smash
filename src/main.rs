@@ -52,23 +52,23 @@ fn main() {
         None => ColorType::Rgba8,
     };
 
-    let result = match matches.free.len() {
-        0 => exit_with_bad_args("No input file specified.", program, options),
-        _ => {
-            let input_paths: Vec<&Path> = matches.free
-                                                 .iter()
-                                                 .map(|input_string| Path::new(input_string))
-                                                 .collect();
-            let output_pathbufs: Vec<PathBuf> = input_paths.iter()
-                                                           .map(|input_path| {
-                                                               get_output_path(input_path, &matches)
-                                                           })
-                                                           .collect();
-            image_set::quantize(input_paths.into_iter(),
-                                output_pathbufs.iter().map(|o| o.as_path()),
-                                colortype)
-        }
-    };
+    if matches.free.is_empty() {
+        exit_with_bad_args("No input file specified.", program, options);
+    }
+
+    let input_paths: Vec<&Path> = matches.free
+                                         .iter()
+                                         .map(|input_string| Path::new(input_string))
+                                         .collect();
+    let output_pathbufs: Vec<PathBuf> = input_paths.iter()
+                                                   .map(|input_path| {
+                                                       get_output_path(input_path, &matches)
+                                                   })
+                                                   .collect();
+    let result = image_set::quantize(input_paths.into_iter(),
+                                     output_pathbufs.iter().map(|o| o.as_path()),
+                                     colortype);
+
     if let Err(error) = result {
         println!("{}", error);
         std::process::exit(1);
