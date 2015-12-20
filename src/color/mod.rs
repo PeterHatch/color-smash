@@ -6,6 +6,9 @@ use image_lib::Pixel as PixelTrait;
 use byte_utils::*;
 use k_means::{SimpleInput, Input, Output, Grouped};
 
+#[cfg(test)]
+mod tests;
+
 pub enum ColorType {
     Rgba8,
     Rgb5a3,
@@ -32,7 +35,7 @@ pub trait Color {
 
 #[derive(PartialEq, Eq, Hash, Copy, Clone, Debug)]
 pub struct Rgba8 {
-    pub data: Pixel,
+    data: Pixel,
 }
 
 impl Color for Rgba8 {
@@ -71,7 +74,7 @@ impl From<Pixel> for Rgba8 {
 
 #[derive(PartialEq, Eq, Hash, Copy, Clone)]
 pub struct Rgb5a3 {
-    pub data: u16,
+    data: u16,
 }
 
 enum Rgb5a3Type {
@@ -88,14 +91,13 @@ impl Rgb5a3 {
         }
     }
 
-    // FIXME: made public for testing purposes
-    pub fn r5(&self) -> u16 {
+    fn r5(&self) -> u16 {
         (self.data >> 10) & 0x1F
     }
-    pub fn g5(&self) -> u16 {
+    fn g5(&self) -> u16 {
         (self.data >> 5) & 0x1F
     }
-    pub fn b5(&self) -> u16 {
+    fn b5(&self) -> u16 {
         self.data & 0x1F
     }
 
