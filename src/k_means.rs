@@ -72,9 +72,7 @@ impl<T: SimpleInput<O>, O: Output> SimpleInput<O> for Grouped<T> {
 pub fn quantize<I: Input<O>, O: Output>(nodes: &Vec<I>) -> (Vec<O>, Vec<Vec<&I>>) {
     let k = 256;
 
-    println!("{:?} Nodes", nodes.len());
     let mut centroids = initialize_centroids(k, &nodes);
-
     let mut nodes_per_centroid = find_nearest_centroids(&centroids, &nodes);
 
     for iteration in 1.. {

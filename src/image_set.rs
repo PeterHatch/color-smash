@@ -32,7 +32,7 @@ pub fn quantize<'a, 'b, I, O>(input_paths: I,
         for color in quantization_map.values() {
             colors.insert(color);
         }
-        println!("Colors = {:?}", colors.len());
+        println!("{} color combinations in output images", colors.len());
     }
 
     let width = images[0].width();
@@ -88,6 +88,9 @@ fn get_color_sets(images: &Vec<&mut RgbaImage>) -> Vec<ColorSet<Rgba8>> {
 fn quantize_to<T: Color + Output>(color_sets: Vec<ColorSet<Rgba8>>)
                                   -> HashMap<Vec<Pixel>, Vec<Pixel>> {
     let grouped_color_sets = ::k_means::collect_groups::<_, ColorSet<T>>(color_sets.into_iter());
+
+    println!("{} color combinations in input images", grouped_color_sets.len());
+
     let (centroids, grouped_color_sets_per_centroid): (Vec<ColorSet<T>>, _) =
         ::k_means::quantize(&grouped_color_sets);
 
