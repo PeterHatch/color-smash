@@ -28,11 +28,12 @@ pub fn quantize<'a, 'b, I, O>(input_paths: I,
 
     // Temp diagnostic output
     {
-        let mut colors = ::std::collections::HashSet::new();
-        for color in quantization_map.values() {
-            colors.insert(color);
+        let mut color_combinations = ::std::collections::HashSet::new();
+        for color_combination in quantization_map.values() {
+            color_combinations.insert(color_combination);
         }
-        println!("{} color combinations in output images", colors.len());
+        println!("{} color combinations in output images",
+                 color_combinations.len());
     }
 
     let width = images[0].width();
@@ -89,18 +90,19 @@ fn quantize_to<T: Color + Output>(color_sets: Vec<ColorSet<Rgba8>>)
                                   -> HashMap<Vec<Pixel>, Vec<Pixel>> {
     let grouped_color_sets = ::k_means::collect_groups::<_, ColorSet<T>>(color_sets.into_iter());
 
-    println!("{} color combinations in input images", grouped_color_sets.len());
+    println!("{} color combinations in input images",
+             grouped_color_sets.len());
 
-    let (centroids, grouped_color_sets_per_centroid): (Vec<ColorSet<T>>, _) =
-        ::k_means::quantize(&grouped_color_sets);
+    let (centers, grouped_color_sets_per_cluster): (Vec<ColorSet<T>>, _) =
+        ::k_means::run(&grouped_color_sets);
 
     let mut quantization_map = HashMap::new();
 
-    for (centroid, grouped_color_sets) in centroids.into_iter()
-                                                   .zip(grouped_color_sets_per_centroid.iter()) {
-        for &grouped_color_set in grouped_color_sets {
+    for (center, grouped_color_sets) in centers.into_iter()
+                                               .zip(grouped_color_sets_per_cluster.into_iter()) {
+        for grouped_color_set in grouped_color_sets {
             quantization_map.insert(grouped_color_set.clone().data.as_pixels(),
-                                    centroid.clone().as_pixels());
+                                    center.clone().as_pixels());
         }
     }
 

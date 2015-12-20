@@ -24,7 +24,6 @@ pub trait Color {
         let (r2, g2, b2, a2) = other.components();
 
         let opaque_distance = (r1 - r2).powi(2) + (g1 - g2).powi(2) + (b1 - b2).powi(2);
-
         let alpha_distance = (a1 - a2).powi(2) * 3.0;
 
         (opaque_distance * a1 * a2) + alpha_distance
@@ -217,7 +216,7 @@ impl<O: Color + Output> SimpleInput<O> for Rgba8 {
         let distance = self.simple_distance_to(other);
 
         if distance < closest_possible_distance {
-            println!("Distance from {:?} to {:?} is closer than to RGB5A3 version {:?}",
+            println!("Distance from {:?} to {:?} is closer than to output version {:?}",
                      self,
                      other,
                      SimpleInput::<O>::as_output(self));
@@ -234,17 +233,9 @@ impl<O: Color + Output> SimpleInput<O> for Rgba8 {
 
 impl<O: Color + Output> Input<O> for Grouped<Rgba8> {
     fn mean_of(grouped_colors: &Vec<&Grouped<Rgba8>>) -> O {
-        O::new(mean_of_colors_as_vec(grouped_colors))
+        O::new(mean_of_colors(grouped_colors.iter().map(|&&group| group)))
     }
 }
-
-impl Output for Rgba8 {}
-impl Output for Rgb5a3 {}
-
-fn mean_of_colors_as_vec(grouped_colors: &Vec<&Grouped<Rgba8>>) -> (f64, f64, f64, f64) {
-    mean_of_colors(grouped_colors.iter().map(|&&group| group))
-}
-
 
 pub fn mean_of_colors<I>(grouped_colors: I) -> (f64, f64, f64, f64)
     where I: Iterator<Item = Grouped<Rgba8>>
@@ -277,3 +268,6 @@ pub fn mean_of_colors<I>(grouped_colors: I) -> (f64, f64, f64, f64)
         (0.0, 0.0, 0.0, 0.0)
     }
 }
+
+impl Output for Rgba8 {}
+impl Output for Rgb5a3 {}
