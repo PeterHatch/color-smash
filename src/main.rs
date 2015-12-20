@@ -10,7 +10,6 @@ extern crate image as image_lib;
 extern crate getopts;
 use getopts::{Matches, Options};
 
-mod byte_utils;
 mod color;
 use color::ColorType;
 mod color_combination;

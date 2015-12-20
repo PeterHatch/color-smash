@@ -3,7 +3,6 @@ use std::fmt;
 use image_lib;
 use image_lib::Pixel as PixelTrait;
 
-use byte_utils::*;
 use k_means::{SimpleInput, Input, Output, Grouped};
 
 #[cfg(test)]
@@ -113,6 +112,16 @@ impl Rgb5a3 {
     fn b4(&self) -> u16 {
         self.data & 0x0F
     }
+}
+
+fn convert_5_bits_to_8(byte: u16) -> u8 {
+    ((byte * 255 + 15) / 31) as u8
+}
+fn convert_4_bits_to_8(byte: u16) -> u8 {
+    (byte * 17) as u8
+}
+fn convert_3_bits_to_8(byte: u16) -> u8 {
+    ((byte * 255 + 3) / 7) as u8
 }
 
 impl Color for Rgb5a3 {

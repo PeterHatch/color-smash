@@ -1,5 +1,5 @@
 use super::*;
-use byte_utils::*;
+use super::convert_5_bits_to_8;
 use k_means::{Grouped, SimpleInput, Input};
 
 #[test]
