@@ -1,7 +1,7 @@
 use byte_utils::*;
 use color::*;
 use k_means::*;
-use image_set::create_quantization_map;
+use images::*;
 
 use std::collections::HashSet;
 use std::path::Path;

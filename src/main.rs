@@ -13,9 +13,9 @@ use getopts::{Matches, Options};
 mod byte_utils;
 mod color;
 use color::ColorType;
-mod color_set;
+mod color_combination;
 mod k_means;
-mod image_set;
+mod images;
 mod numeric_float;
 
 #[cfg(test)]
@@ -65,9 +65,9 @@ fn main() {
                                                        get_output_path(input_path, &matches)
                                                    })
                                                    .collect();
-    let result = image_set::quantize(input_paths.into_iter(),
-                                     output_pathbufs.iter().map(|o| o.as_path()),
-                                     colortype);
+    let result = images::quantize(input_paths.into_iter(),
+                                  output_pathbufs.iter().map(|o| o.as_path()),
+                                  colortype);
 
     if let Err(error) = result {
         println!("{}", error);
