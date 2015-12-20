@@ -71,8 +71,7 @@ impl<T: SimpleInput<O>, O: Output> SimpleInput<O> for Grouped<T> {
 pub fn run<I: Input<O>, O: Output>(data_points: &Vec<I>) -> (Vec<O>, Vec<Vec<&I>>) {
     let k = 256;
 
-    let mut centers = initialize_centers(k, &data_points);
-    let mut points_per_cluster = assign_to_clusters(&data_points, &centers);
+    let (mut centers, mut points_per_cluster) = initialize_centers(k, &data_points);
 
     for iteration in 1.. {
         println!("Iteration {:?}", iteration);
@@ -104,8 +103,8 @@ pub fn run<I: Input<O>, O: Output>(data_points: &Vec<I>) -> (Vec<O>, Vec<Vec<&I>
     (centers, points_per_cluster)
 }
 
-fn initialize_centers<I: Input<O>, O: Output>(k: usize, points: &Vec<I>) -> Vec<O> {
-    let mut centers = Vec::with_capacity(k);
+fn initialize_centers<I: Input<O>, O: Output>(k: u32, points: &Vec<I>) -> (Vec<O>, Vec<Vec<&I>>) {
+    let mut centers = Vec::with_capacity(k as usize);
     let first_center = points.iter().max_by_key(|point| point.count()).unwrap().as_output();
     centers.push(first_center);
 
@@ -114,7 +113,7 @@ fn initialize_centers<I: Input<O>, O: Output>(k: usize, points: &Vec<I>) -> Vec<
                                                .collect();
     let mut cluster_per_point: Vec<_> = vec![0; points.len()];
 
-    let mut distance_per_cluster: Vec<_> = Vec::with_capacity(k);
+    let mut distance_per_cluster: Vec<_> = Vec::with_capacity(k as usize);
     let distance_to_first_center = points.iter()
                                          .zip(distance_per_point.iter())
                                          .map(|(point, distance)| {
@@ -123,7 +122,7 @@ fn initialize_centers<I: Input<O>, O: Output>(k: usize, points: &Vec<I>) -> Vec<
                                          .sum();
     distance_per_cluster.push(distance_to_first_center);
 
-    while centers.len() < k {
+    while centers.len() < (k as usize) {
         let cluster_to_split = worst_cluster(&distance_per_cluster);
         let farthest_point_index = farthest_point_of(cluster_to_split,
                                                      &cluster_per_point,
@@ -151,7 +150,22 @@ fn initialize_centers<I: Input<O>, O: Output>(k: usize, points: &Vec<I>) -> Vec<
         centers.push(new_center);
     }
 
-    centers
+    let points_per_cluster = points_per_cluster(points, cluster_per_point, k);
+
+    (centers, points_per_cluster)
+}
+
+fn points_per_cluster<I: Input<O>, O: Output>(points: &Vec<I>,
+                                              cluster_per_point: Vec<usize>,
+                                              k: u32)
+                                              -> Vec<Vec<&I>> {
+    let mut points_per_cluster = vec![Vec::new(); (k as usize)];
+
+    for (point, cluster) in points.iter().zip(cluster_per_point.into_iter()) {
+        points_per_cluster[cluster as usize].push(point);
+    }
+
+    points_per_cluster
 }
 
 fn worst_cluster(distance_per_cluster: &Vec<f64>) -> usize {
