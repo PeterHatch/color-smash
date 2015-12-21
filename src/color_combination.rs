@@ -15,9 +15,17 @@ impl<T: Color> ColorCombination<T> {
     }
 }
 
-impl<O: Color + Output> SimpleInput<ColorCombination<O>> for ColorCombination<Rgba8> {
+impl<O: Color> SimpleInput<ColorCombination<O>> for ColorCombination<Rgba8> {
     fn distance_to(&self, other: &ColorCombination<O>) -> f64 {
-        self.colors.iter().zip(other.colors.iter()).map(|(c1, c2)| c1.distance_to(c2)).sum()
+        self.colors
+            .iter()
+            .zip(other.colors.iter())
+            .map(|(c1, c2)| SimpleInput::distance_to(c1, c2))
+            .sum()
+    }
+
+    fn normalized_distance(&self, other: &ColorCombination<O>) -> f64 {
+        self.colors.iter().zip(other.colors.iter()).map(|(c1, c2)| c1.normalized_distance(c2)).sum()
     }
 
     fn as_output(&self) -> ColorCombination<O> {
@@ -25,14 +33,14 @@ impl<O: Color + Output> SimpleInput<ColorCombination<O>> for ColorCombination<Rg
     }
 }
 
-impl<O: Color + Output> Input<ColorCombination<O>> for Grouped<ColorCombination<Rgba8>> {
+impl<O: Color> Input<ColorCombination<O>> for Grouped<ColorCombination<Rgba8>> {
     fn mean_of(grouped_colorsets: &Vec<&Grouped<ColorCombination<Rgba8>>>) -> ColorCombination<O> {
         mean_of(grouped_colorsets)
     }
 }
 
-fn mean_of<O: Color + Output>(grouped_colorsets: &Vec<&Grouped<ColorCombination<Rgba8>>>)
-                              -> ColorCombination<O> {
+fn mean_of<O: Color>(grouped_colorsets: &Vec<&Grouped<ColorCombination<Rgba8>>>)
+                     -> ColorCombination<O> {
     let color_count = grouped_colorsets[0].data.colors.len();
     let mean_colors = (0..color_count)
                           .map(|i| {
@@ -48,4 +56,8 @@ fn mean_of<O: Color + Output>(grouped_colorsets: &Vec<&Grouped<ColorCombination<
     ColorCombination::new(mean_colors)
 }
 
-impl<T: Color + Output> Output for ColorCombination<T> {}
+impl<T: Color> Output for ColorCombination<T> {
+    fn distance_to(&self, other: &ColorCombination<T>) -> f64 {
+        self.colors.iter().zip(other.colors.iter()).map(|(c1, c2)| c1.distance_to(c2)).sum()
+    }
+}

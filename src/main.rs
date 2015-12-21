@@ -1,5 +1,6 @@
 #![feature(iter_arith)]
 #![feature(hashmap_hasher)]
+#![feature(slice_sort_by_key)]
 
 use std::env;
 use std::ops::Deref;

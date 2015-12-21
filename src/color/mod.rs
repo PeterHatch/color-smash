@@ -15,7 +15,7 @@ pub enum ColorType {
 
 pub type Pixel = image_lib::Rgba<u8>;
 
-pub trait Color {
+pub trait Color : Output {
     fn new(components: (f64, f64, f64, f64)) -> Self;
 
     fn as_pixel(self) -> Pixel;
@@ -29,6 +29,12 @@ pub trait Color {
         let alpha_distance = (a1 - a2).powi(2) * 3.0;
 
         (opaque_distance * a1 * a2) + alpha_distance
+    }
+}
+
+impl<T: Color> Output for T {
+    fn distance_to(&self, other: &T) -> f64 {
+        self.simple_distance_to(other)
     }
 }
 
@@ -221,16 +227,21 @@ impl fmt::Debug for Rgb5a3 {
 //     }
 // }
 
-impl<O: Color + Output> SimpleInput<O> for Rgba8 {
+impl<O: Color> SimpleInput<O> for Rgba8 {
     fn distance_to(&self, other: &O) -> f64 {
-        let closest_possible_distance = self.simple_distance_to::<O>(&self.as_output());
-        let distance = self.simple_distance_to(other);
+        self.simple_distance_to(other)
+    }
+
+    fn normalized_distance(&self, other: &O) -> f64 {
+        let output = SimpleInput::<O>::as_output(self);
+        let closest_possible_distance = SimpleInput::distance_to(self, &output);
+        let distance = SimpleInput::distance_to(self, other);
 
         if distance < closest_possible_distance {
             println!("Distance from {:?} to {:?} is closer than to output version {:?}",
                      self,
                      other,
-                     SimpleInput::<O>::as_output(self));
+                     output);
             return 0.0;
         }
 
@@ -242,7 +253,7 @@ impl<O: Color + Output> SimpleInput<O> for Rgba8 {
     }
 }
 
-impl<O: Color + Output> Input<O> for Grouped<Rgba8> {
+impl<O: Color> Input<O> for Grouped<Rgba8> {
     fn mean_of(grouped_colors: &Vec<&Grouped<Rgba8>>) -> O {
         O::new(mean_of_colors(grouped_colors.iter().map(|&&group| group)))
     }
@@ -279,6 +290,3 @@ pub fn mean_of_colors<I>(grouped_colors: I) -> (f64, f64, f64, f64)
         (0.0, 0.0, 0.0, 0.0)
     }
 }
-
-impl Output for Rgba8 {}
-impl Output for Rgb5a3 {}

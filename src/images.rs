@@ -7,8 +7,6 @@ use image_lib::{GenericImage, RgbaImage, Pixel as PixelTrait, ImageError};
 use color_combination::ColorCombination;
 use color::{Color, ColorType, Pixel, Rgba8, Rgb5a3};
 
-use k_means::Output;
-
 pub fn quantize<'a, 'b, I, O>(input_paths: I,
                               output_paths: O,
                               colortype: ColorType)
@@ -86,8 +84,8 @@ fn get_color_combinations(images: &Vec<&mut RgbaImage>) -> Vec<ColorCombination<
     color_combinations
 }
 
-fn quantize_to<T: Color + Output>(color_combinations: Vec<ColorCombination<Rgba8>>)
-                                  -> HashMap<Vec<Pixel>, Vec<Pixel>> {
+fn quantize_to<T: Color>(color_combinations: Vec<ColorCombination<Rgba8>>)
+                         -> HashMap<Vec<Pixel>, Vec<Pixel>> {
     let grouped_color_combinations =
         ::k_means::collect_groups::<_, ColorCombination<T>>(color_combinations.into_iter());
 
