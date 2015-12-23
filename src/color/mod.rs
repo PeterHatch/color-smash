@@ -8,11 +8,6 @@ use k_means::{SimpleInput, Input, Output, Grouped};
 #[cfg(test)]
 mod tests;
 
-pub enum ColorType {
-    Rgba8,
-    Rgb5a3,
-}
-
 pub type Pixel = image_lib::Rgba<u8>;
 
 pub trait Color : Output {

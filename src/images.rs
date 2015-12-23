@@ -5,7 +5,8 @@ use image_lib;
 use image_lib::{GenericImage, RgbaImage, Pixel as PixelTrait, ImageError};
 
 use color_combination::ColorCombination;
-use color::{Color, ColorType, Pixel, Rgba8, Rgb5a3};
+use color::{Color, Pixel, Rgba8, Rgb5a3};
+use options::ColorType;
 
 pub fn quantize<'a, 'b, I, O>(input_paths: I,
                               output_paths: O,

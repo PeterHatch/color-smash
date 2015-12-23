@@ -1,5 +1,6 @@
 use color::*;
 use images::*;
+use options::*;
 
 use std::collections::HashSet;
 use std::path::Path;

@@ -3,7 +3,6 @@
 #![feature(slice_sort_by_key)]
 
 use std::env;
-use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
 extern crate image as image_lib;
@@ -12,11 +11,11 @@ extern crate getopts;
 use getopts::{Matches, Options};
 
 mod color;
-use color::ColorType;
 mod color_combination;
 mod k_means;
 mod images;
 mod numeric_float;
+mod options;
 
 #[cfg(test)]
 mod tests;
@@ -37,20 +36,10 @@ fn main() {
         return;
     }
 
-    let colortype = match matches.opt_str("colortype") {
-        Some(string) => {
-            let colortype = string.to_uppercase();
-            match colortype.deref() {
-                "RGBA8" => ColorType::Rgba8,
-                "RGB5A3" => ColorType::Rgb5a3,
-                _ => {
-                    println!("Unknown color type {}", string);
-                    std::process::exit(1);
-                }
-            }
-        }
-        None => ColorType::Rgba8,
-    };
+    let colortype = options::color_type(matches.opt_str("colortype")).unwrap_or_else(|error| {
+        println!("{}", error);
+        std::process::exit(1);
+    });
 
     if matches.free.is_empty() {
         exit_with_bad_args("No input file specified.", program, options);
