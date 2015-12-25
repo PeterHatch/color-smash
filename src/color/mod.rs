@@ -1,4 +1,5 @@
 use std::fmt;
+use std::marker::PhantomData;
 
 use image_lib;
 use image_lib::Pixel as PixelTrait;
@@ -222,15 +223,32 @@ impl fmt::Debug for Rgb5a3 {
 //     }
 // }
 
-impl<O: Color> SimpleInput<O> for Rgba8 {
-    fn distance_to(&self, other: &O) -> f64 {
-        self.simple_distance_to(other)
+#[derive(PartialEq, Eq, Hash, Copy, Clone, Debug)]
+pub struct InputColor<I: Color, O: Color> {
+    pub color: I,
+    output_type: PhantomData<O>,
+}
+
+impl<I: Color, O: Color> InputColor<I, O> {
+    pub fn new(color: I) -> InputColor<I, O> {
+        InputColor {
+            color: color,
+            output_type: PhantomData,
+        }
+    }
+}
+
+impl<I: Color, O: Color> SimpleInput for InputColor<I, O> {
+    type Output = O;
+
+    fn distance_to(&self, other: &Self::Output) -> f64 {
+        self.color.simple_distance_to(other)
     }
 
-    fn normalized_distance(&self, other: &O) -> f64 {
-        let output = SimpleInput::<O>::as_output(self);
-        let closest_possible_distance = SimpleInput::distance_to(self, &output);
-        let distance = SimpleInput::distance_to(self, other);
+    fn normalized_distance(&self, other: &Self::Output) -> f64 {
+        let output = self.as_output();
+        let closest_possible_distance = self.distance_to(&output);
+        let distance = self.distance_to(other);
 
         if distance < closest_possible_distance {
             println!("Distance from {:?} to {:?} is closer than to output version {:?}",
@@ -243,19 +261,21 @@ impl<O: Color> SimpleInput<O> for Rgba8 {
         distance - closest_possible_distance
     }
 
-    fn as_output(&self) -> O {
-        O::new(self.components())
+    fn as_output(&self) -> Self::Output {
+        Self::Output::new(self.color.components())
     }
 }
 
-impl<O: Color> Input<O> for Grouped<Rgba8> {
-    fn mean_of(grouped_colors: &Vec<&Grouped<Rgba8>>) -> O {
-        O::new(mean_of_colors(grouped_colors.iter().map(|&&group| group)))
+impl<I: Color, O: Color> Input for Grouped<InputColor<I, O>> {
+    fn mean_of(grouped_colors: &Vec<&Grouped<InputColor<I, O>>>) -> Self::Output {
+        mean_of_colors(grouped_colors.iter().map(|&group| (&group.data, group.count)))
     }
 }
 
-pub fn mean_of_colors<I>(grouped_colors: I) -> (f64, f64, f64, f64)
-    where I: Iterator<Item = Grouped<Rgba8>>
+pub fn mean_of_colors<'a, I, C, O>(colors_with_counts: I) -> O
+    where I: Iterator<Item = (&'a InputColor<C, O>, u32)>,
+          C: 'a + Color,
+          O: 'a + Color
 {
     let mut r_sum = 0.0;
     let mut g_sum = 0.0;
@@ -263,8 +283,8 @@ pub fn mean_of_colors<I>(grouped_colors: I) -> (f64, f64, f64, f64)
     let mut a_sum = 0.0;
     let mut total_count = 0;
 
-    for Grouped { data, count } in grouped_colors {
-        let (r, g, b, a) = data.components();
+    for (data, count) in colors_with_counts {
+        let (r, g, b, a) = data.color.components();
         let weighted_a = a * (count as f64);
 
         r_sum += r * weighted_a;
@@ -280,8 +300,8 @@ pub fn mean_of_colors<I>(grouped_colors: I) -> (f64, f64, f64, f64)
         let b = b_sum / a_sum;
         let a = a_sum / (total_count as f64);
 
-        (r, g, b, a)
+        O::new((r, g, b, a))
     } else {
-        (0.0, 0.0, 0.0, 0.0)
+        O::new((0.0, 0.0, 0.0, 0.0))
     }
 }

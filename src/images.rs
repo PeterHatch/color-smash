@@ -4,8 +4,8 @@ use std::path::Path;
 use image_lib;
 use image_lib::{GenericImage, RgbaImage, Pixel as PixelTrait, ImageError};
 
-use color_combination::ColorCombination;
-use color::{Color, Pixel, Rgba8, Rgb5a3};
+use color_combination::{ColorCombination, InputColorCombination};
+use color::{Color, InputColor, Pixel, Rgba8, Rgb5a3};
 use options::ColorType;
 
 pub fn quantize<'a, 'b, I, O>(input_paths: I,
@@ -59,15 +59,20 @@ pub fn quantize<'a, 'b, I, O>(input_paths: I,
 pub fn create_quantization_map(images: &Vec<&mut RgbaImage>,
                                colortype: ColorType)
                                -> HashMap<Vec<Pixel>, Vec<Pixel>> {
-    let color_combinations = get_color_combinations(images);
-
     match colortype {
-        ColorType::Rgba8 => quantize_to::<Rgba8>(color_combinations),
-        ColorType::Rgb5a3 => quantize_to::<Rgb5a3>(color_combinations),
+        ColorType::Rgba8 => {
+            let color_combinations = get_color_combinations::<Rgba8>(images);
+            quantize_to(color_combinations)
+        }
+        ColorType::Rgb5a3 => {
+            let color_combinations = get_color_combinations::<Rgb5a3>(images);
+            quantize_to(color_combinations)
+        }
     }
 }
 
-fn get_color_combinations(images: &Vec<&mut RgbaImage>) -> Vec<ColorCombination<Rgba8>> {
+fn get_color_combinations<O: Color>(images: &Vec<&mut RgbaImage>)
+                                    -> Vec<InputColorCombination<Rgba8, O>> {
     let width = images[0].width();
     let height = images[0].height();
 
@@ -75,9 +80,11 @@ fn get_color_combinations(images: &Vec<&mut RgbaImage>) -> Vec<ColorCombination<
     for y in 0..height {
         for x in 0..width {
             let color_combination =
-                ColorCombination::new(images.iter()
-                                            .map(|image| Rgba8::from(*image.get_pixel(x, y)))
-                                            .collect());
+                InputColorCombination::<Rgba8, O>::new(images.iter()
+                                                             .map(|image| {
+                                                                 InputColor::new(Rgba8::from(*image.get_pixel(x, y)))
+                                                             })
+                                                             .collect());
             color_combinations.push(color_combination);
         }
     }
@@ -85,10 +92,9 @@ fn get_color_combinations(images: &Vec<&mut RgbaImage>) -> Vec<ColorCombination<
     color_combinations
 }
 
-fn quantize_to<T: Color>(color_combinations: Vec<ColorCombination<Rgba8>>)
+fn quantize_to<T: Color>(color_combinations: Vec<InputColorCombination<Rgba8, T>>)
                          -> HashMap<Vec<Pixel>, Vec<Pixel>> {
-    let grouped_color_combinations =
-        ::k_means::collect_groups::<_, ColorCombination<T>>(color_combinations.into_iter());
+    let grouped_color_combinations = ::k_means::collect_groups(color_combinations.into_iter());
 
     println!("{} color combinations in input images",
              grouped_color_combinations.len());

@@ -1,9 +1,7 @@
 use super::{Input, Output};
 use numeric_float::n64;
 
-pub fn initialize_centers<I: Input<O>, O: Output>(k: u32,
-                                                  points: &Vec<I>)
-                                                  -> (Vec<O>, Vec<Vec<&I>>) {
+pub fn initialize_centers<I: Input>(k: u32, points: &Vec<I>) -> (Vec<I::Output>, Vec<Vec<&I>>) {
     let mut centers = Vec::with_capacity(k as usize);
     let first_center = points.iter().max_by_key(|point| point.count()).unwrap().as_output();
     centers.push(first_center);
@@ -55,10 +53,10 @@ pub fn initialize_centers<I: Input<O>, O: Output>(k: u32,
     (centers, points_per_cluster)
 }
 
-fn points_per_cluster<I: Input<O>, O: Output>(points: &Vec<I>,
-                                              cluster_per_point: Vec<usize>,
-                                              k: u32)
-                                              -> Vec<Vec<&I>> {
+fn points_per_cluster<I: Input>(points: &Vec<I>,
+                                cluster_per_point: Vec<usize>,
+                                k: u32)
+                                -> Vec<Vec<&I>> {
     let mut points_per_cluster = vec![Vec::new(); (k as usize)];
 
     for (point, cluster) in points.iter().zip(cluster_per_point.into_iter()) {

@@ -10,9 +10,9 @@ fn rgba8_to_rgb5a3_test() {
         ([0xEC, 0x08, 0x09, 0xEC], (6 << 12) | (0x0E << 8) | (0 << 4) | 1),
     ];
     for &(test_data, expected_data) in &test_data {
-        let test_color = Rgba8 { data: Pixel { data: test_data } };
+        let test_color = InputColor::<Rgba8, Rgb5a3>::new(Rgba8 { data: Pixel { data: test_data } });
         let expected = Rgb5a3 { data: expected_data };
-        let result: Rgb5a3 = test_color.as_output();
+        let result = test_color.as_output();
         assert_eq!(expected, result);
     }
 }
@@ -71,7 +71,7 @@ fn color_distance_test() {
     for &(first_color, second_color, expected_distance) in &test_data {
         let first = Rgba8 { data: Pixel { data: first_color } };
         let second = Rgba8 { data: Pixel { data: second_color } };
-        let result = first.distance_to(&second);
+        let result = first.simple_distance_to(&second);
         assert_eq!(expected_distance, result);
     }
 }
@@ -88,7 +88,7 @@ fn color_mean_test() {
         let nodes: Vec<_> = colors.iter()
                                   .map(|&(color_data, count)| {
                                       Grouped {
-                                          data: Rgba8 { data: Pixel { data: color_data } },
+                                          data: InputColor::<Rgba8, Rgba8>::new(Rgba8 { data: Pixel { data: color_data } }),
                                           count: count,
                                       }
                                   })
