@@ -1,4 +1,4 @@
-use color::{Color, InputColor, Pixel};
+use color::{Color, ConvertibleColor, Pixel};
 use k_means::{SimpleInput, Input, Output, Grouped};
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
@@ -22,20 +22,20 @@ impl<T: Color> Output for ColorCombination<T> {
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
-pub struct InputColorCombination<I: Color, O: Color> {
-    colors: Vec<InputColor<I, O>>,
+pub struct ConvertibleColorCombination<I: Color, O: Color> {
+    colors: Vec<ConvertibleColor<I, O>>,
 }
 
-impl<I: Color, O: Color> InputColorCombination<I, O> {
-    pub fn new(colors: Vec<InputColor<I, O>>) -> InputColorCombination<I, O> {
-        InputColorCombination { colors: colors }
+impl<I: Color, O: Color> ConvertibleColorCombination<I, O> {
+    pub fn new(colors: Vec<ConvertibleColor<I, O>>) -> ConvertibleColorCombination<I, O> {
+        ConvertibleColorCombination { colors: colors }
     }
     pub fn as_pixels(self) -> Vec<Pixel> {
         self.colors.into_iter().map(|input_color| input_color.color.as_pixel()).collect()
     }
 }
 
-impl<I: Color, O: Color> SimpleInput for InputColorCombination<I, O> {
+impl<I: Color, O: Color> SimpleInput for ConvertibleColorCombination<I, O> {
     type Output = ColorCombination<O>;
 
     fn distance_to(&self, other: &Self::Output) -> f64 {
@@ -59,13 +59,13 @@ impl<I: Color, O: Color> SimpleInput for InputColorCombination<I, O> {
     }
 }
 
-impl<I: Color, O: Color> Input for Grouped<InputColorCombination<I, O>> {
-    fn mean_of(grouped_colorsets: &Vec<&Grouped<InputColorCombination<I, O>>>) -> Self::Output {
+impl<I: Color, O: Color> Input for Grouped<ConvertibleColorCombination<I, O>> {
+    fn mean_of(grouped_colorsets: &Vec<&Grouped<ConvertibleColorCombination<I, O>>>) -> Self::Output {
         mean_of(grouped_colorsets)
     }
 }
 
-fn mean_of<I: Color, O: Color>(grouped_colorsets: &Vec<&Grouped<InputColorCombination<I, O>>>)
+fn mean_of<I: Color, O: Color>(grouped_colorsets: &Vec<&Grouped<ConvertibleColorCombination<I, O>>>)
                                -> ColorCombination<O> {
     let color_count = grouped_colorsets[0].data.colors.len();
     let mean_colors = (0..color_count)

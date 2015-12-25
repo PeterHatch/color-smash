@@ -224,21 +224,21 @@ impl fmt::Debug for Rgb5a3 {
 // }
 
 #[derive(PartialEq, Eq, Hash, Copy, Clone, Debug)]
-pub struct InputColor<I: Color, O: Color> {
+pub struct ConvertibleColor<I: Color, O: Color> {
     pub color: I,
     output_type: PhantomData<O>,
 }
 
-impl<I: Color, O: Color> InputColor<I, O> {
-    pub fn new(color: I) -> InputColor<I, O> {
-        InputColor {
+impl<I: Color, O: Color> ConvertibleColor<I, O> {
+    pub fn new(color: I) -> ConvertibleColor<I, O> {
+        ConvertibleColor {
             color: color,
             output_type: PhantomData,
         }
     }
 }
 
-impl<I: Color, O: Color> SimpleInput for InputColor<I, O> {
+impl<I: Color, O: Color> SimpleInput for ConvertibleColor<I, O> {
     type Output = O;
 
     fn distance_to(&self, other: &Self::Output) -> f64 {
@@ -266,14 +266,14 @@ impl<I: Color, O: Color> SimpleInput for InputColor<I, O> {
     }
 }
 
-impl<I: Color, O: Color> Input for Grouped<InputColor<I, O>> {
-    fn mean_of(grouped_colors: &Vec<&Grouped<InputColor<I, O>>>) -> Self::Output {
+impl<I: Color, O: Color> Input for Grouped<ConvertibleColor<I, O>> {
+    fn mean_of(grouped_colors: &Vec<&Grouped<ConvertibleColor<I, O>>>) -> Self::Output {
         mean_of_colors(grouped_colors.iter().map(|&group| (&group.data, group.count)))
     }
 }
 
 pub fn mean_of_colors<'a, I, C, O>(colors_with_counts: I) -> O
-    where I: Iterator<Item = (&'a InputColor<C, O>, u32)>,
+    where I: Iterator<Item = (&'a ConvertibleColor<C, O>, u32)>,
           C: 'a + Color,
           O: 'a + Color
 {

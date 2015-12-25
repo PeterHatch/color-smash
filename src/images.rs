@@ -4,8 +4,8 @@ use std::path::Path;
 use image_lib;
 use image_lib::{GenericImage, RgbaImage, Pixel as PixelTrait, ImageError};
 
-use color_combination::{ColorCombination, InputColorCombination};
-use color::{Color, InputColor, Pixel, Rgba8, Rgb5a3};
+use color_combination::{ColorCombination, ConvertibleColorCombination};
+use color::{Color, ConvertibleColor, Pixel, Rgba8, Rgb5a3};
 use options::ColorType;
 
 pub fn quantize<'a, 'b, I, O>(input_paths: I,
@@ -72,7 +72,7 @@ pub fn create_quantization_map(images: &Vec<&mut RgbaImage>,
 }
 
 fn get_color_combinations<O: Color>(images: &Vec<&mut RgbaImage>)
-                                    -> Vec<InputColorCombination<Rgba8, O>> {
+                                    -> Vec<ConvertibleColorCombination<Rgba8, O>> {
     let width = images[0].width();
     let height = images[0].height();
 
@@ -80,9 +80,9 @@ fn get_color_combinations<O: Color>(images: &Vec<&mut RgbaImage>)
     for y in 0..height {
         for x in 0..width {
             let color_combination =
-                InputColorCombination::<Rgba8, O>::new(images.iter()
+                ConvertibleColorCombination::<Rgba8, O>::new(images.iter()
                                                              .map(|image| {
-                                                                 InputColor::new(Rgba8::from(*image.get_pixel(x, y)))
+                                                                 ConvertibleColor::new(Rgba8::from(*image.get_pixel(x, y)))
                                                              })
                                                              .collect());
             color_combinations.push(color_combination);
@@ -92,7 +92,7 @@ fn get_color_combinations<O: Color>(images: &Vec<&mut RgbaImage>)
     color_combinations
 }
 
-fn quantize_to<T: Color>(color_combinations: Vec<InputColorCombination<Rgba8, T>>)
+fn quantize_to<T: Color>(color_combinations: Vec<ConvertibleColorCombination<Rgba8, T>>)
                          -> HashMap<Vec<Pixel>, Vec<Pixel>> {
     let grouped_color_combinations = ::k_means::collect_groups(color_combinations.into_iter());
 
