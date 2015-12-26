@@ -4,6 +4,7 @@ use image_lib;
 
 use k_means::{SimpleInput, Input, Output, Grouped};
 
+pub mod combination;
 mod rgba8;
 mod rgb5a3;
 pub use self::rgba8::Rgba8;

@@ -4,8 +4,8 @@ use std::path::Path;
 use image_lib;
 use image_lib::{GenericImage, RgbaImage, Pixel as PixelTrait, ImageError};
 
-use color_combination::{ColorCombination, ConvertibleColorCombination};
 use color::{Color, ConvertibleColor, Pixel, Rgba8, Rgb5a3};
+use color::combination::{ColorCombination, ConvertibleColorCombination};
 use options::ColorType;
 
 #[cfg(test)]

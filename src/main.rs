@@ -11,7 +11,6 @@ extern crate getopts;
 use getopts::{Matches, Options};
 
 mod color;
-mod color_combination;
 mod k_means;
 mod images;
 mod numeric_float;
