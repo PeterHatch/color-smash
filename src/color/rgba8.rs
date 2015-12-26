@@ -22,7 +22,7 @@ impl Color for Rgba8 {
         Rgba8 { data: Pixel { data: [r, g, b, a] } }
     }
 
-    fn as_pixel(self) -> Pixel {
+    fn as_pixel(&self) -> Pixel {
         self.data
     }
 

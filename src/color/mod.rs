@@ -18,7 +18,7 @@ pub type Pixel = image_lib::Rgba<u8>;
 pub trait Color : Output {
     fn new(components: (f64, f64, f64, f64)) -> Self;
 
-    fn as_pixel(self) -> Pixel;
+    fn as_pixel(&self) -> Pixel;
 
     fn components(&self) -> (f64, f64, f64, f64);
     fn simple_distance_to<T: Color>(&self, other: &T) -> f64 {

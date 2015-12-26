@@ -86,7 +86,7 @@ impl Color for Rgb5a3 {
         Rgb5a3 { data: data }
     }
 
-    fn as_pixel(self) -> Pixel {
+    fn as_pixel(&self) -> Pixel {
         match self.storage_type() {
             Rgb5a3Type::Rgb5 => {
                 let r = convert_5_bits_to_8(self.r5());

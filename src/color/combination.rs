@@ -10,8 +10,8 @@ impl<T: Color> ColorCombination<T> {
     pub fn new(colors: Vec<T>) -> ColorCombination<T> {
         ColorCombination { colors: colors }
     }
-    pub fn as_pixels(self) -> Vec<Pixel> {
-        self.colors.into_iter().map(|color| color.as_pixel()).collect()
+    pub fn as_pixels(&self) -> Vec<Pixel> {
+        self.colors.iter().map(|color| color.as_pixel()).collect()
     }
 }
 
@@ -30,8 +30,8 @@ impl<I: Color, O: Color> ConvertibleColorCombination<I, O> {
     pub fn new(colors: Vec<ConvertibleColor<I, O>>) -> ConvertibleColorCombination<I, O> {
         ConvertibleColorCombination { colors: colors }
     }
-    pub fn as_pixels(self) -> Vec<Pixel> {
-        self.colors.into_iter().map(|input_color| input_color.color.as_pixel()).collect()
+    pub fn as_pixels(&self) -> Vec<Pixel> {
+        self.colors.iter().map(|input_color| input_color.color.as_pixel()).collect()
     }
 }
 
