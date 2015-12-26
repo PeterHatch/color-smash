@@ -27,7 +27,9 @@ fn color_mean_test() {
         let nodes: Vec<_> = colors.iter()
                                   .map(|&(color_data, count)| {
                                       Grouped {
-                                          data: ConvertibleColor::<Rgba8, Rgba8>::new(Pixel { data: color_data }.into()),
+                                          data: ConvertibleColor::<Rgba8, Rgba8>::from(Pixel {
+                                              data: color_data,
+                                          }),
                                           count: count,
                                       }
                                   })

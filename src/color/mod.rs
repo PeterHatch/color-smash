@@ -44,10 +44,10 @@ pub struct ConvertibleColor<I: Color, O: Color> {
     output_type: PhantomData<O>,
 }
 
-impl<I: Color, O: Color> ConvertibleColor<I, O> {
-    pub fn new(color: I) -> ConvertibleColor<I, O> {
+impl<O: Color> From<Pixel> for ConvertibleColor<Rgba8, O> {
+    fn from(pixel: Pixel) -> Self {
         ConvertibleColor {
-            color: color,
+            color: pixel.into(),
             output_type: PhantomData,
         }
     }

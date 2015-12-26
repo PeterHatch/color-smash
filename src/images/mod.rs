@@ -4,7 +4,7 @@ use std::path::Path;
 use image_lib;
 use image_lib::{GenericImage, RgbaImage, Pixel as PixelTrait, ImageError};
 
-use color::{Color, ConvertibleColor, Pixel, Rgba8, Rgb5a3};
+use color::{Color, Pixel, Rgba8, Rgb5a3};
 use color::combination::{ColorCombination, ConvertibleColorCombination};
 use options::ColorType;
 
@@ -84,10 +84,11 @@ fn get_color_combinations<O: Color>(images: &Vec<&mut RgbaImage>)
         for x in 0..width {
             let color_combination =
                 ConvertibleColorCombination::<Rgba8, O>::new(images.iter()
-                                                             .map(|image| {
-                                                                 ConvertibleColor::new(Rgba8::from(*image.get_pixel(x, y)))
-                                                             })
-                                                             .collect());
+                                                                   .map(|image| {
+                                                                       (*image.get_pixel(x, y))
+                                                                           .into()
+                                                                   })
+                                                                   .collect());
             color_combinations.push(color_combination);
         }
     }
