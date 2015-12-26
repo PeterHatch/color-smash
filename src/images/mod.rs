@@ -59,9 +59,9 @@ pub fn quantize<'a, 'b, I, O>(input_paths: I,
     Result::Ok(())
 }
 
-pub fn create_quantization_map(images: &Vec<&mut RgbaImage>,
-                               colortype: ColorType)
-                               -> HashMap<Vec<Pixel>, Vec<Pixel>> {
+fn create_quantization_map(images: &Vec<&mut RgbaImage>,
+                           colortype: ColorType)
+                           -> HashMap<Vec<Pixel>, Vec<Pixel>> {
     match colortype {
         ColorType::Rgba8 => {
             let color_combinations = get_color_combinations::<Rgba8>(images);

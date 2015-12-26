@@ -1,4 +1,4 @@
-use super::*;
+use super::create_quantization_map;
 use color::*;
 use options::*;
 
