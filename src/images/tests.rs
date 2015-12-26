@@ -1,5 +1,5 @@
+use super::*;
 use color::*;
-use images::*;
 use options::*;
 
 use std::collections::HashSet;

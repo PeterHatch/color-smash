@@ -8,6 +8,9 @@ use color_combination::{ColorCombination, ConvertibleColorCombination};
 use color::{Color, ConvertibleColor, Pixel, Rgba8, Rgb5a3};
 use options::ColorType;
 
+#[cfg(test)]
+mod tests;
+
 pub fn quantize<'a, 'b, I, O>(input_paths: I,
                               output_paths: O,
                               colortype: ColorType)

@@ -17,9 +17,6 @@ mod images;
 mod numeric_float;
 mod options;
 
-#[cfg(test)]
-mod tests;
-
 fn main() {
     let mut args = env::args();
     let program = &args.next().unwrap();
