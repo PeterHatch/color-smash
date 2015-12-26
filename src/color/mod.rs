@@ -87,7 +87,7 @@ impl<I: Color, O: Color> Input for Grouped<ConvertibleColor<I, O>> {
     }
 }
 
-pub fn mean_of_colors<'a, I, C, O>(colors_with_counts: I) -> O
+fn mean_of_colors<'a, I, C, O>(colors_with_counts: I) -> O
     where I: Iterator<Item = (&'a ConvertibleColor<C, O>, u32)>,
           C: 'a + Color,
           O: 'a + Color
