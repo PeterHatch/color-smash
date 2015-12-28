@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use image_lib;
-use image_lib::{DynamicImage, GenericImage, RgbaImage, Pixel as PixelTrait, ImageError};
+use image_lib::{GenericImage, RgbaImage, Pixel as PixelTrait, ImageError};
 
 use color::{Color, Pixel, Rgba8, Rgb5a3};
 use color::combination::ConvertibleColorCombination;
@@ -20,7 +20,6 @@ pub fn quantize<'a, 'b, I, O>(input_paths: I,
           O: Iterator<Item = &'b Path>
 {
     let mut images = try!(open_images(input_paths));
-    let mut images = images.iter_mut().map(|image| image.as_mut_rgba8().unwrap()).collect();
 
     let quantization_map = quantization_map_from_images_and_color_type(&images, colortype);
 
@@ -56,16 +55,16 @@ pub fn quantize<'a, 'b, I, O>(input_paths: I,
 }
 
 fn open_images<'a, I: Iterator<Item = &'a Path>>(input_paths: I)
-                                                 -> Result<Vec<DynamicImage>, ImageError> {
+                                                 -> Result<Vec<RgbaImage>, ImageError> {
     let mut images = Vec::new();
     for input_path in input_paths {
-        let image = try!(image_lib::open(input_path));
+        let image = try!(image_lib::open(input_path)).to_rgba();
         images.push(image);
     }
     Ok(images)
 }
 
-fn quantization_map_from_images_and_color_type(images: &Vec<&mut RgbaImage>,
+fn quantization_map_from_images_and_color_type(images: &Vec<RgbaImage>,
                                                colortype: ColorType)
                                                -> HashMap<Vec<Pixel>, Vec<Pixel>> {
     match colortype {
@@ -74,7 +73,7 @@ fn quantization_map_from_images_and_color_type(images: &Vec<&mut RgbaImage>,
     }
 }
 
-fn quantization_map_from_images<O: Color>(images: &Vec<&mut RgbaImage>)
+fn quantization_map_from_images<O: Color>(images: &Vec<RgbaImage>)
                                           -> HashMap<Vec<Pixel>, Vec<Pixel>> {
     let color_combinations = get_color_combinations::<O>(images);
     let grouped_color_combinations = group_color_combinations(color_combinations);
@@ -85,7 +84,7 @@ fn quantization_map_from_images<O: Color>(images: &Vec<&mut RgbaImage>)
     quantization_map_from_items(grouped_color_combinations)
 }
 
-fn get_color_combinations<O: Color>(images: &Vec<&mut RgbaImage>)
+fn get_color_combinations<O: Color>(images: &Vec<RgbaImage>)
                                     -> Vec<ConvertibleColorCombination<Rgba8, O>> {
     let width = images[0].width();
     let height = images[0].height();
