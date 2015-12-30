@@ -6,6 +6,8 @@ use std::path::Path;
 use image_lib;
 use image_lib::RgbaImage;
 
+use test::Bencher;
+
 fn load_test_image() -> RgbaImage {
     image_lib::open(&Path::new("00.png")).unwrap().to_rgba()
 }
@@ -32,4 +34,13 @@ fn rgb_is_zero_if_alpha_is() {
             }
         }
     }
+}
+
+#[bench]
+fn bench_quantization_to_rgb5a3(b: &mut Bencher) {
+    let image = load_test_image();
+    let images = vec![image];
+    b.iter(|| {
+        quantization_map_from_images::<Rgb5a3>(&images)
+    });
 }

@@ -1,6 +1,7 @@
 #![feature(iter_arith)]
 #![feature(hashmap_hasher)]
 #![feature(slice_sort_by_key)]
+#![feature(test)]
 
 use std::env;
 use std::path::{Path, PathBuf};
@@ -15,6 +16,9 @@ mod k_means;
 mod images;
 mod numeric_float;
 mod options;
+
+#[cfg(test)]
+extern crate test;
 
 fn main() {
     let mut args = env::args();
