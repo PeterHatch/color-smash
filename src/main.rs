@@ -45,6 +45,8 @@ fn main() {
         exit_with_bad_args("No input file specified.", program, options);
     }
 
+    let verbose = matches.opt_present("verbose");
+
     let input_paths: Vec<&Path> = matches.free
                                          .iter()
                                          .map(|input_string| Path::new(input_string))
@@ -56,7 +58,8 @@ fn main() {
                                                    .collect();
     let result = images::quantize(input_paths.into_iter(),
                                   output_pathbufs.iter().map(|o| o.as_path()),
-                                  colortype);
+                                  colortype,
+                                  verbose);
 
     if let Err(error) = result {
         println!("{}", error);
@@ -68,6 +71,7 @@ fn initialize_options() -> Options {
     let mut options = Options::new();
 
     options.optflag("h", "help", "print this help message.");
+    options.optflag("v", "verbose", "print detailed output.");
     options.optopt("s",
                    "suffix",
                    "set custom suffix for output filenames.",

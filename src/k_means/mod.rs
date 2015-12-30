@@ -83,13 +83,15 @@ impl<I: SimpleInput> SimpleInput for Grouped<I> {
     }
 }
 
-pub fn run<I: Input>(data_points: &Vec<I>) -> (Vec<I::Output>, Vec<Vec<&I>>) {
+pub fn run<I: Input>(data_points: &Vec<I>, verbose: bool) -> (Vec<I::Output>, Vec<Vec<&I>>) {
     let k = 256;
 
     let (mut centers, mut points_per_cluster) = initializer::initialize_centers(k, &data_points);
 
     for iteration in 1.. {
-        println!("Iteration {:?}", iteration);
+        if verbose {
+            println!("Iteration {:?}", iteration);
+        }
 
         // Temp diagnostic message
         {

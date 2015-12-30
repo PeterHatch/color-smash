@@ -15,7 +15,7 @@ fn load_test_image() -> RgbaImage {
 #[test]
 fn has_256_colors() {
     let image = load_test_image();
-    let quantization_map = quantization_map_from_images::<Rgb5a3>(&vec![image]);
+    let quantization_map = quantization_map_from_images::<Rgb5a3>(&vec![image], false);
     let mut colors = HashSet::new();
     for color in quantization_map.values() {
         colors.insert(color);
@@ -26,7 +26,7 @@ fn has_256_colors() {
 #[test]
 fn rgb_is_zero_if_alpha_is() {
     let image = load_test_image();
-    let quantization_map = quantization_map_from_images::<Rgb5a3>(&vec![image]);
+    let quantization_map = quantization_map_from_images::<Rgb5a3>(&vec![image], false);
     for colors in quantization_map.values().into_iter().chain(quantization_map.keys().into_iter()) {
         for color in colors {
             if color.data[3] == 0 {
@@ -41,6 +41,6 @@ fn bench_quantization_to_rgb5a3(b: &mut Bencher) {
     let image = load_test_image();
     let images = vec![image];
     b.iter(|| {
-        quantization_map_from_images::<Rgb5a3>(&images)
+        quantization_map_from_images::<Rgb5a3>(&images, false)
     });
 }
