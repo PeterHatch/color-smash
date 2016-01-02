@@ -4,7 +4,7 @@ use std::fmt::Debug;
 use std::hash::Hash;
 use std::hash::SipHasher;
 
-use numeric_float::n64;
+use ordered_float::NotNaN;
 
 mod initializer;
 
@@ -16,8 +16,8 @@ pub trait SimpleInput : Eq + Hash + Clone + Debug {
     fn as_output(&self) -> Self::Output;
     fn nearest(&self, centers: &Vec<Self::Output>) -> u32 {
         let centers_with_indexes = centers.iter().zip(0..);
-        let (_center, cluster) = centers_with_indexes.min_by_key(|&(center, _cluster)| -> n64 {
-                                                         self.distance_to(center).into()
+        let (_center, cluster) = centers_with_indexes.min_by_key(|&(center, _cluster)| {
+                                                         NotNaN::new(self.distance_to(center)).unwrap()
                                                      })
                                                      .unwrap();
         cluster
@@ -179,7 +179,7 @@ fn calculate_distances_between_centers<O: Output>(centers: &Vec<O>) -> Vec<Vec<(
     }
 
     for distances in distances_per_center.iter_mut() {
-        distances.sort_by_key(|&(_center_index, distance)| -> n64 { distance.into() });
+        distances.sort_by_key(|&(_center_index, distance)| NotNaN::new(distance).unwrap() );
     }
 
     distances_per_center

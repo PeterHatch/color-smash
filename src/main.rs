@@ -7,6 +7,8 @@ use std::env;
 use std::path::{Path, PathBuf};
 
 extern crate image as image_lib;
+extern crate num;
+extern crate ordered_float;
 
 extern crate getopts;
 use getopts::{Matches, Options};
@@ -14,7 +16,6 @@ use getopts::{Matches, Options};
 mod color;
 mod k_means;
 mod images;
-mod numeric_float;
 mod options;
 
 #[cfg(test)]

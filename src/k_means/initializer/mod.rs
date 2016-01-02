@@ -1,5 +1,5 @@
 use super::{Input, Output};
-use numeric_float::n64;
+use ordered_float::NotNaN;
 
 pub fn initialize_centers<I: Input>(k: u32, points: &Vec<I>) -> (Vec<I::Output>, Vec<Vec<&I>>) {
     let mut centers = Vec::with_capacity(k as usize);
@@ -69,7 +69,7 @@ fn points_per_cluster<I: Input>(points: &Vec<I>,
 fn worst_cluster(distance_per_cluster: &Vec<f64>) -> usize {
     let distances_with_indexes = distance_per_cluster.iter().zip(0..);
     let (_distance, cluster) =
-        distances_with_indexes.max_by_key(|&(&distance, _cluster)| -> n64 { distance.into() })
+        distances_with_indexes.max_by_key(|&(&distance, _cluster)| NotNaN::new(distance).unwrap())
                               .unwrap();
     cluster
 }
@@ -86,8 +86,8 @@ fn farthest_point_of(target_cluster: usize,
         }
     });
     let distances_and_indexes = point_indexes.map(|i| (distance_per_point[i], i));
-    let (_distance, index) = distances_and_indexes.max_by_key(|&(distance, _index)| -> n64 {
-                                                      distance.into()
+    let (_distance, index) = distances_and_indexes.max_by_key(|&(distance, _index)| {
+                                                      NotNaN::new(distance).unwrap()
                                                   })
                                                   .unwrap();
     index

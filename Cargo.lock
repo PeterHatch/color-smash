@@ -4,6 +4,8 @@ version = "0.1.0"
 dependencies = [
  "getopts 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "image 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num 0.1.29 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ordered-float 0.1.0 (git+https://github.com/AerialX/rust-ordered-float?branch=updates)",
 ]
 
 [[package]]
@@ -122,6 +124,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ordered-float"
+version = "0.1.0"
+source = "git+https://github.com/AerialX/rust-ordered-float?branch=updates#fa23d3d541c2d9e8ba1c7b29a6c7c00b2354b9a7"
+dependencies = [
+ "num 0.1.29 (registry+https://github.com/rust-lang/crates.io-index)",
+ "unreachable 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "png"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -146,6 +157,19 @@ dependencies = [
 [[package]]
 name = "rustc-serialize"
 version = "0.3.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "unreachable"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "void 0.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "void"
+version = "0.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
