@@ -2,6 +2,7 @@
 #![feature(hashmap_hasher)]
 #![feature(slice_sort_by_key)]
 #![feature(test)]
+#![feature(zero_one)]
 
 use std::env;
 use std::path::{Path, PathBuf};

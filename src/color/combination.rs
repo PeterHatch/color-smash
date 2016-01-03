@@ -16,7 +16,8 @@ impl<T: Color> ColorCombination<T> {
 }
 
 impl<T: Color> Output for ColorCombination<T> {
-    fn distance_to(&self, other: &ColorCombination<T>) -> f64 {
+    type Distance = T::Distance;
+    fn distance_to(&self, other: &ColorCombination<T>) -> Self::Distance {
         self.colors.iter().zip(other.colors.iter()).map(|(c1, c2)| c1.distance_to(c2)).sum()
     }
 }
@@ -37,8 +38,9 @@ impl<I: Color, O: Color> ConvertibleColorCombination<I, O> {
 
 impl<I: Color, O: Color> SimpleInput for ConvertibleColorCombination<I, O> {
     type Output = ColorCombination<O>;
+    type Distance = I::Distance;
 
-    fn distance_to(&self, other: &Self::Output) -> f64 {
+    fn distance_to(&self, other: &Self::Output) -> Self::Distance {
         self.colors
             .iter()
             .zip(other.colors.iter())
@@ -46,7 +48,7 @@ impl<I: Color, O: Color> SimpleInput for ConvertibleColorCombination<I, O> {
             .sum()
     }
 
-    fn normalized_distance(&self, other: &Self::Output) -> f64 {
+    fn normalized_distance(&self, other: &Self::Output) -> Self::Distance {
         self.colors
             .iter()
             .zip(other.colors.iter())

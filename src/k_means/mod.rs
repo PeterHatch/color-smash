@@ -1,23 +1,27 @@
 use std::collections::HashMap;
 use std::collections::hash_state::DefaultState;
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 use std::hash::Hash;
 use std::hash::SipHasher;
 
+use num;
+use num::{Float, FromPrimitive, NumCast};
 use ordered_float::NotNaN;
 
 mod initializer;
 
 pub trait SimpleInput : Eq + Hash + Clone + Debug {
     type Output: Output;
+    type Distance: Display + Float + FromPrimitive + NumCast + PartialOrd;
 
-    fn distance_to(&self, other: &Self::Output) -> f64;
-    fn normalized_distance(&self, other: &Self::Output) -> f64;
+    fn distance_to(&self, other: &Self::Output) -> Self::Distance;
+    fn normalized_distance(&self, other: &Self::Output) -> Self::Distance;
     fn as_output(&self) -> Self::Output;
     fn nearest(&self, centers: &Vec<Self::Output>) -> u32 {
         let centers_with_indexes = centers.iter().zip(0..);
         let (_center, cluster) = centers_with_indexes.min_by_key(|&(center, _cluster)| {
-                                                         NotNaN::new(self.distance_to(center)).unwrap()
+                                                         NotNaN::new(self.distance_to(center))
+                                                             .unwrap()
                                                      })
                                                      .unwrap();
         cluster
@@ -32,7 +36,8 @@ pub trait Input : SimpleInput {
 }
 
 pub trait Output : Eq + Hash + Clone + Debug {
-    fn distance_to(&self, other: &Self) -> f64;
+    type Distance: Display + Float + FromPrimitive + NumCast + PartialOrd;
+    fn distance_to(&self, other: &Self) -> Self::Distance;
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
@@ -68,11 +73,12 @@ pub fn collect_groups<I>(items: I) -> Vec<Grouped<I::Item>>
 
 impl<I: SimpleInput> SimpleInput for Grouped<I> {
     type Output = I::Output;
+    type Distance = I::Distance;
 
-    fn distance_to(&self, other: &Self::Output) -> f64 {
+    fn distance_to(&self, other: &Self::Output) -> Self::Distance {
         self.data.distance_to(other)
     }
-    fn normalized_distance(&self, other: &Self::Output) -> f64 {
+    fn normalized_distance(&self, other: &Self::Output) -> Self::Distance {
         self.data.normalized_distance(other)
     }
     fn as_output(&self) -> Self::Output {
@@ -140,14 +146,16 @@ fn assign_to_clusters<'a, 'b, 'c, I>(centers: &'a Vec<I::Output>,
             let mut distance_to_new = distance_to_prior_center;
 
             for &(center_index, distance_between_centers) in distances_to_other_centers {
-                if distance_to_prior_center * 4.0 <= distance_between_centers {
+                if distance_to_prior_center * I::Distance::from_f32(4.0).unwrap() <=
+                   num::cast(distance_between_centers).unwrap() {
                     break;
                 }
                 let distance = point.distance_to(&centers[center_index as usize]);
                 if distance < distance_to_new {
                     new_cluster = center_index;
                     distance_to_new = distance;
-                    if distance_to_prior_center * 4.0 <= distance_between_centers {
+                    if distance_to_prior_center * I::Distance::from_f32(4.0).unwrap() <=
+                       num::cast(distance_between_centers).unwrap() {
                         println!("! distance to prior center: {}", distance_to_prior_center);
                         println!("  distance to new center: {}", distance);
                         println!("  distance between centers: {}", distance_between_centers);
@@ -162,7 +170,7 @@ fn assign_to_clusters<'a, 'b, 'c, I>(centers: &'a Vec<I::Output>,
     points_per_cluster
 }
 
-fn calculate_distances_between_centers<O: Output>(centers: &Vec<O>) -> Vec<Vec<(u32, f64)>> {
+fn calculate_distances_between_centers<O: Output>(centers: &Vec<O>) -> Vec<Vec<(u32, O::Distance)>> {
     let k = centers.len();
     let mut distances_per_center = vec![Vec::with_capacity(k - 1); k];
 
@@ -179,7 +187,7 @@ fn calculate_distances_between_centers<O: Output>(centers: &Vec<O>) -> Vec<Vec<(
     }
 
     for distances in distances_per_center.iter_mut() {
-        distances.sort_by_key(|&(_center_index, distance)| NotNaN::new(distance).unwrap() );
+        distances.sort_by_key(|&(_center_index, distance)| NotNaN::new(distance).unwrap());
     }
 
     distances_per_center

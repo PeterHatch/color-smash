@@ -1,4 +1,6 @@
 use super::{Input, Output};
+use std::num::Zero;
+use num::{Float, FromPrimitive};
 use ordered_float::NotNaN;
 
 pub fn initialize_centers<I: Input>(k: u32, points: &Vec<I>) -> (Vec<I::Output>, Vec<Vec<&I>>) {
@@ -15,7 +17,8 @@ pub fn initialize_centers<I: Input>(k: u32, points: &Vec<I>) -> (Vec<I::Output>,
     let distance_to_first_center = points.iter()
                                          .zip(distance_per_point.iter())
                                          .map(|(point, distance)| {
-                                             distance * (point.count() as f64)
+                                             *distance *
+                                             I::Distance::from_u32(point.count()).unwrap()
                                          })
                                          .sum();
     distance_per_cluster.push(distance_to_first_center);
@@ -32,17 +35,25 @@ pub fn initialize_centers<I: Input>(k: u32, points: &Vec<I>) -> (Vec<I::Output>,
         }
 
         let new_cluster = centers.len();
-        distance_per_cluster.push(0.0);
+        distance_per_cluster.push(I::Distance::zero());
 
         for ((point, distance), cluster) in points.iter()
                                                   .zip(distance_per_point.iter_mut())
                                                   .zip(cluster_per_point.iter_mut()) {
             let new_distance = point.normalized_distance(&new_center);
             if new_distance < *distance {
-                distance_per_cluster[*cluster] -= *distance * (point.count() as f64);
+                // FIXME: -= doesn't work for num::Float
+                // distance_per_cluster[*cluster] -= *distance * I::Distance::from_u32(point.count()).unwrap();
+                distance_per_cluster[*cluster] = distance_per_cluster[*cluster] -
+                                                 *distance *
+                                                 I::Distance::from_u32(point.count()).unwrap();
                 *cluster = new_cluster;
                 *distance = new_distance;
-                distance_per_cluster[new_cluster] += new_distance * (point.count() as f64);
+                // FIXME: += doesn't work for num::Float
+                // distance_per_cluster[new_cluster] += new_distance * I::Distance::from_u32(point.count()).unwrap();
+                distance_per_cluster[new_cluster] = distance_per_cluster[new_cluster] +
+                                                    new_distance *
+                                                    I::Distance::from_u32(point.count()).unwrap();
             }
         }
         centers.push(new_center);
@@ -66,18 +77,19 @@ fn points_per_cluster<I: Input>(points: &Vec<I>,
     points_per_cluster
 }
 
-fn worst_cluster(distance_per_cluster: &Vec<f64>) -> usize {
+fn worst_cluster<T: Float>(distance_per_cluster: &Vec<T>) -> usize {
     let distances_with_indexes = distance_per_cluster.iter().zip(0..);
-    let (_distance, cluster) =
-        distances_with_indexes.max_by_key(|&(&distance, _cluster)| NotNaN::new(distance).unwrap())
-                              .unwrap();
+    let (_distance, cluster) = distances_with_indexes.max_by_key(|&(&distance, _cluster)| {
+                                                         NotNaN::new(distance).unwrap()
+                                                     })
+                                                     .unwrap();
     cluster
 }
 
-fn farthest_point_of(target_cluster: usize,
-                     cluster_per_point: &Vec<usize>,
-                     distance_per_point: &Vec<f64>)
-                     -> usize {
+fn farthest_point_of<T: Float>(target_cluster: usize,
+                               cluster_per_point: &Vec<usize>,
+                               distance_per_point: &Vec<T>)
+                               -> usize {
     let point_indexes = cluster_per_point.iter().zip(0..).filter_map(|(&cluster, point_index)| {
         if cluster == target_cluster {
             Some(point_index)

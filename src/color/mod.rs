@@ -1,6 +1,8 @@
 use std::marker::PhantomData;
+use std::num::Zero;
 
 use image_lib;
+use num::FromPrimitive;
 
 use k_means::{SimpleInput, Input, Output, Grouped};
 
@@ -21,19 +23,21 @@ pub trait Color : Output {
     fn as_pixel(&self) -> Pixel;
 
     fn components(&self) -> (f64, f64, f64, f64);
-    fn simple_distance_to<T: Color>(&self, other: &T) -> f64 {
+    fn simple_distance_to<T: Color>(&self, other: &T) -> Self::Distance {
         let (r1, g1, b1, a1) = self.components();
         let (r2, g2, b2, a2) = other.components();
 
         let opaque_distance = (r1 - r2).powi(2) + (g1 - g2).powi(2) + (b1 - b2).powi(2);
         let alpha_distance = (a1 - a2).powi(2) * 3.0;
 
-        (opaque_distance * a1 * a2) + alpha_distance
+        let distance = (opaque_distance * a1 * a2) + alpha_distance;
+        Self::Distance::from_f64(distance).unwrap()
     }
 }
 
 impl<T: Color> Output for T {
-    fn distance_to(&self, other: &T) -> f64 {
+    type Distance = f64;
+    fn distance_to(&self, other: &T) -> Self::Distance {
         self.simple_distance_to(other)
     }
 }
@@ -55,12 +59,13 @@ impl<O: Color> From<Pixel> for ConvertibleColor<Rgba8, O> {
 
 impl<I: Color, O: Color> SimpleInput for ConvertibleColor<I, O> {
     type Output = O;
+    type Distance = I::Distance;
 
-    fn distance_to(&self, other: &Self::Output) -> f64 {
+    fn distance_to(&self, other: &Self::Output) -> Self::Distance {
         self.color.simple_distance_to(other)
     }
 
-    fn normalized_distance(&self, other: &Self::Output) -> f64 {
+    fn normalized_distance(&self, other: &Self::Output) -> Self::Distance {
         let output = self.as_output();
         let closest_possible_distance = self.distance_to(&output);
         let distance = self.distance_to(other);
@@ -70,7 +75,7 @@ impl<I: Color, O: Color> SimpleInput for ConvertibleColor<I, O> {
                      self,
                      other,
                      output);
-            return 0.0;
+            return Self::Distance::zero();
         }
 
         distance - closest_possible_distance
