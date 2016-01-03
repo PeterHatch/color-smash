@@ -75,7 +75,8 @@ fn quantization_map_from_images_and_color_type(images: &Vec<RgbaImage>,
     }
 }
 
-fn quantization_map_from_images<O: Color>(images: &Vec<RgbaImage>, verbose: bool)
+fn quantization_map_from_images<O: Color>(images: &Vec<RgbaImage>,
+                                          verbose: bool)
                                           -> HashMap<Vec<Pixel>, Vec<Pixel>> {
     let color_combinations = get_color_combinations::<O>(images);
     let grouped_color_combinations = group_color_combinations(color_combinations);
@@ -121,8 +122,9 @@ fn quantization_map_from_items<O: Color>(grouped_color_combinations: Vec<Grouped
         ::k_means::run(&grouped_color_combinations, verbose);
     let mut quantization_map = HashMap::new();
 
-    for (center, grouped_color_combinations) in centers.into_iter()
-                                                       .zip(grouped_color_combinations_per_cluster.into_iter()) {
+    for (center, grouped_color_combinations) in
+        centers.into_iter()
+               .zip(grouped_color_combinations_per_cluster.into_iter()) {
         for grouped_color_combination in grouped_color_combinations {
             quantization_map.insert(grouped_color_combination.data.as_pixels(),
                                     center.as_pixels());

@@ -40,7 +40,5 @@ fn rgb_is_zero_if_alpha_is() {
 fn bench_quantization_to_rgb5a3(b: &mut Bencher) {
     let image = load_test_image();
     let images = vec![image];
-    b.iter(|| {
-        quantization_map_from_images::<Rgb5a3>(&images, false)
-    });
+    b.iter(|| quantization_map_from_images::<Rgb5a3>(&images, false));
 }
