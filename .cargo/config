@@ -1,4 +1,0 @@
-# Needs a checked-out copy of num branch that supports std::num::Zero from the nightly builds.
-#
-# Available at https://github.com/PeterHatch/num/tree/nightly-zero
-paths = ["/Projects/Rust/num"]

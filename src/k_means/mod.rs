@@ -3,6 +3,7 @@ use std::collections::hash_state::DefaultState;
 use std::fmt::{Debug, Display};
 use std::hash::Hash;
 use std::hash::SipHasher;
+use std::num::Zero;
 
 use num;
 use num::{Float, FromPrimitive, NumCast};
@@ -12,7 +13,7 @@ mod initializer;
 
 pub trait SimpleInput : Eq + Hash + Clone + Debug {
     type Output: Output;
-    type Distance: Display + Float + FromPrimitive + NumCast + PartialOrd;
+    type Distance: Display + Float + FromPrimitive + NumCast + PartialOrd + Zero;
 
     fn distance_to(&self, other: &Self::Output) -> Self::Distance;
     fn normalized_distance(&self, other: &Self::Output) -> Self::Distance;
@@ -36,7 +37,7 @@ pub trait Input : SimpleInput {
 }
 
 pub trait Output : Eq + Hash + Clone + Debug {
-    type Distance: Display + Float + FromPrimitive + NumCast + PartialOrd;
+    type Distance: Display + Float + FromPrimitive + NumCast + PartialOrd + Zero;
     fn distance_to(&self, other: &Self) -> Self::Distance;
 }
 
