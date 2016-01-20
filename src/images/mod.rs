@@ -1,3 +1,5 @@
+//! Handles quantization of images.
+
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -12,6 +14,7 @@ use options::ColorType;
 #[cfg(test)]
 mod tests;
 
+/// Quantize a set of input images, and writes the output.
 pub fn quantize<'a, 'b, I, O>(input_paths: I,
                               output_paths: O,
                               colortype: ColorType,
@@ -24,7 +27,6 @@ pub fn quantize<'a, 'b, I, O>(input_paths: I,
 
     let quantization_map = quantization_map_from_images_and_color_type(&images, colortype, verbose);
 
-    // Temp diagnostic output
     if verbose {
         let mut color_combinations = ::std::collections::HashSet::new();
         for color_combination in quantization_map.values() {
@@ -120,8 +122,8 @@ fn quantization_map_from_items<O: Color>(grouped_color_combinations: Vec<Grouped
                                          -> HashMap<Vec<Pixel>, Vec<Pixel>> {
     let (centers, grouped_color_combinations_per_cluster) =
         ::k_means::run(&grouped_color_combinations, verbose);
-    let mut quantization_map = HashMap::new();
 
+    let mut quantization_map = HashMap::new();
     for (center, grouped_color_combinations) in
         centers.into_iter()
                .zip(grouped_color_combinations_per_cluster.into_iter()) {

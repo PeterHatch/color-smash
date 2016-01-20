@@ -1,3 +1,5 @@
+//! This implements k-means traits for colors and other support functions.
+
 use std::marker::PhantomData;
 use std::num::Zero;
 

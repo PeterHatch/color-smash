@@ -1,3 +1,12 @@
+//! An implementation of the k-means clustering algorithm.
+//!
+//! (This wants to be its own crate. Orphan rule issues make it easier to stay
+//! a module for now, but it doesn't reference other parts of the program.)
+//!
+//! We have a separate Input and Output type, so we can cluster image data and
+//! have the input pixel type be different from the output - converting RGBA8
+//! to RGB5A3, for example.
+
 use std::collections::HashMap;
 use std::collections::hash_state::DefaultState;
 use std::fmt::{Debug, Display};
@@ -11,6 +20,15 @@ use ordered_float::NotNaN;
 
 mod initializer;
 
+/// This defines the functions k-means uses to cluster input data.
+pub trait Input : SimpleInput {
+    fn mean_of(points: &Vec<&Self>) -> Self::Output;
+}
+
+/// A subset of the input trait with methods that operate on a single point.
+///
+/// The group functions are commonly only defined on a Grouped type; this
+/// subset is what Grouped needs.
 pub trait SimpleInput : Eq + Hash + Clone + Debug {
     type Output: Output;
     type Distance: Display + Float + FromPrimitive + NumCast + PartialOrd + Zero;
@@ -32,35 +50,26 @@ pub trait SimpleInput : Eq + Hash + Clone + Debug {
     }
 }
 
-pub trait Input : SimpleInput {
-    fn mean_of(points: &Vec<&Self>) -> Self::Output;
-}
-
+/// This defines the functions k-means needs for cluster centers.
+///
+/// Most commonly this will be the same type as the input.
 pub trait Output : Eq + Hash + Clone + Debug {
     type Distance: Display + Float + FromPrimitive + NumCast + PartialOrd + Zero;
     fn distance_to(&self, other: &Self) -> Self::Distance;
 }
 
+/// A struct for grouping inputs together for efficiency.
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
 pub struct Grouped<I: SimpleInput> {
     pub data: I,
     pub count: u32,
 }
 
-impl<I: SimpleInput> Grouped<I> {
-    fn new(data: I, count: u32) -> Grouped<I> {
-        Grouped {
-            data: data,
-            count: count,
-        }
-    }
-}
-
+/// Groups identical input items together for efficiency.
 pub fn collect_groups<I>(items: I) -> Vec<Grouped<I::Item>>
     where I: Iterator,
           I::Item: SimpleInput
 {
-
     let mut count_of_items: HashMap<I::Item, u32, DefaultState<SipHasher>> = Default::default();
     for item in items {
         let counter = count_of_items.entry(item).or_insert(0);
@@ -70,6 +79,15 @@ pub fn collect_groups<I>(items: I) -> Vec<Grouped<I::Item>>
     count_of_items.into_iter()
                   .map(|(item, count)| Grouped::new(item, count))
                   .collect()
+}
+
+impl<I: SimpleInput> Grouped<I> {
+    fn new(data: I, count: u32) -> Grouped<I> {
+        Grouped {
+            data: data,
+            count: count,
+        }
+    }
 }
 
 impl<I: SimpleInput> SimpleInput for Grouped<I> {
@@ -90,6 +108,7 @@ impl<I: SimpleInput> SimpleInput for Grouped<I> {
     }
 }
 
+/// Run the k-means algorithm.
 pub fn run<I: Input>(data_points: &Vec<I>, verbose: bool) -> (Vec<I::Output>, Vec<Vec<&I>>) {
     let k = 256;
 

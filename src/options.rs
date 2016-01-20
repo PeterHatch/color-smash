@@ -1,3 +1,9 @@
+//! Defines options that are passed to images::quantize.
+//!
+//! Option enums belong here, and helper functions that deal with them, but
+//! command-line option handling is still in main. This module should be useful
+//! for alternate interfaces as well.
+
 use std::ops::Deref;
 
 pub enum ColorType {

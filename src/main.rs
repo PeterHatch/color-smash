@@ -1,8 +1,13 @@
+//! The main module, which handles the command-line interface.
+//!
+//! Calls images::quantize to do the actual work of quantization.
+
 #![feature(iter_arith)]
 #![feature(hashmap_hasher)]
 #![feature(slice_sort_by_key)]
-#![feature(test)]
 #![feature(zero_one)]
+
+#![cfg_attr(test, feature(test))]
 
 use std::env;
 use std::path::{Path, PathBuf};

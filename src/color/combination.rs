@@ -1,3 +1,8 @@
+//! This covers vectors of colors, for quantizing sets of images.
+//!
+//! Each color combination represents the list of colors that appear in a
+//! given pixel location, with one color per input image.
+
 use color::{Color, ConvertibleColor, Pixel};
 use k_means::{SimpleInput, Input, Output, Grouped};
 
