@@ -3,8 +3,6 @@
 //! Calls images::quantize to do the actual work of quantization.
 
 #![feature(iter_arith)]
-#![feature(hashmap_hasher)]
-#![feature(slice_sort_by_key)]
 #![feature(zero_one)]
 
 #![cfg_attr(test, feature(test))]

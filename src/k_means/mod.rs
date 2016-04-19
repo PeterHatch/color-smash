@@ -8,8 +8,8 @@
 //! to RGB5A3, for example.
 
 use std::collections::HashMap;
-use std::collections::hash_state::DefaultState;
 use std::fmt::{Debug, Display};
+use std::hash::BuildHasherDefault;
 use std::hash::Hash;
 use std::hash::SipHasher;
 use std::num::Zero;
@@ -70,7 +70,7 @@ pub fn collect_groups<I>(items: I) -> Vec<Grouped<I::Item>>
     where I: Iterator,
           I::Item: SimpleInput
 {
-    let mut count_of_items: HashMap<I::Item, u32, DefaultState<SipHasher>> = Default::default();
+    let mut count_of_items: HashMap<I::Item, u32, BuildHasherDefault<SipHasher>> = Default::default();
     for item in items {
         let counter = count_of_items.entry(item).or_insert(0);
         *counter += 1;
