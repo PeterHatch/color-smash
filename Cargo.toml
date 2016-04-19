@@ -7,4 +7,4 @@ authors = ["Peter Hatch <petershatch@gmail.com>"]
 image = "*"
 getopts = "*"
 num = "*"
-ordered-float = { git = "https://github.com/AerialX/rust-ordered-float", branch = "updates" }
+ordered-float = "*"
