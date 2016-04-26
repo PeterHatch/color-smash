@@ -11,6 +11,7 @@ use std::env;
 use std::path::{Path, PathBuf};
 
 extern crate image as image_lib;
+extern crate png;
 extern crate num;
 extern crate ordered_float;
 

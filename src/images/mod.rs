@@ -1,10 +1,15 @@
 //! Handles quantization of images.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::fs::File;
+use std::io;
 use std::path::Path;
 
 use image_lib;
 use image_lib::{GenericImage, RgbaImage, Pixel as PixelTrait, ImageError};
+
+use png;
+use png::HasParameters;
 
 use color::{Color, Pixel, Rgba8, Rgb5a3};
 use color::combination::ConvertibleColorCombination;
@@ -23,37 +28,32 @@ pub fn quantize<'a, 'b, I, O>(input_paths: I,
     where I: Iterator<Item = &'a Path>,
           O: Iterator<Item = &'b Path>
 {
-    let mut images = try!(open_images(input_paths));
+    let images = try!(open_images(input_paths));
 
     let quantization_map = quantization_map_from_images_and_color_type(&images, colortype, verbose);
 
+    let mut color_combinations = ::std::collections::HashSet::new();
+    for color_combination in quantization_map.values() {
+        color_combinations.insert(color_combination);
+    }
+
     if verbose {
-        let mut color_combinations = ::std::collections::HashSet::new();
-        for color_combination in quantization_map.values() {
-            color_combinations.insert(color_combination);
-        }
         println!("{} color combinations in output images",
                  color_combinations.len());
     }
 
+    let ordered_color_combinations = order_color_combinations(color_combinations);
+
+    let indexed_quantization_map = index_quantization_map(&quantization_map, &ordered_color_combinations);
+
     let width = images[0].width();
     let height = images[0].height();
 
-    for y in 0..height {
-        for x in 0..width {
-            let initial_pixels: Vec<_> = images.iter()
-                                               .map(|image| *image.get_pixel(x, y))
-                                               .collect();
-            let new_pixels = quantization_map.get(&initial_pixels).unwrap();
-            for (image, &pixel) in images.iter_mut().zip(new_pixels.iter()) {
-                image.put_pixel(x, y, pixel);
-            }
-        }
-    }
+    let indexed_image_data = calculate_indexes(images, indexed_quantization_map);
+    let (rgb_palettes, alpha_palettes) = calculate_palettes(ordered_color_combinations);
 
-    for (image, output_path) in images.into_iter().zip(output_paths) {
-        try!(image.save(output_path));
-    }
+    try!(write_pngs(output_paths, indexed_image_data, rgb_palettes, alpha_palettes, width, height));
+
     Ok(())
 }
 
@@ -134,4 +134,102 @@ fn quantization_map_from_items<O: Color>(grouped_color_combinations: Vec<Grouped
     }
 
     quantization_map
+}
+
+fn order_color_combinations(color_combinations: HashSet<&Vec<Pixel>>) -> Vec<&Vec<Pixel>> {
+    let mut ordered_color_combinations: Vec<&Vec<Pixel>> = color_combinations.into_iter().collect();
+    ordered_color_combinations.sort_by_key(|color_combination| {
+        let mut distinct_colors = color_combination.len();
+        for i in 1..color_combination.len() {
+            let color1 = color_combination[i];
+            if color_combination[0..i].contains(&color1) {
+                distinct_colors -= 1;
+            }
+        }
+
+        let total_alpha: u32 = color_combination.iter().map(|color| color[3] as u32).sum();
+        let total_red: u32 = color_combination.iter().map(|color| color[0] as u32).sum();
+        let total_green: u32 = color_combination.iter().map(|color| color[1] as u32).sum();
+        let total_blue: u32 = color_combination.iter().map(|color| color[2] as u32).sum();
+
+        (distinct_colors, total_alpha, total_red + total_green + total_blue, total_red, total_green, total_blue)
+    });
+
+    ordered_color_combinations
+}
+
+fn index_quantization_map<'a, 'b>(quantization_map: &'a HashMap<Vec<Pixel>, Vec<Pixel>>, ordered_color_combinations: &'b Vec<&'a Vec<Pixel>>) -> HashMap<&'a Vec<Pixel>, usize> {
+    let mut colors_to_index = HashMap::with_capacity(ordered_color_combinations.len());
+    for (index, color_combination) in ordered_color_combinations.into_iter().enumerate() {
+        colors_to_index.insert(color_combination, index);
+    }
+
+    quantization_map.iter().map(|(key, color_combination)| (key, colors_to_index[&color_combination])).collect()
+}
+
+fn calculate_indexes(images: Vec<RgbaImage>, quantization_map: HashMap<&Vec<Pixel>, usize>) -> Vec<u8> {
+    let width = images[0].width();
+    let height = images[0].height();
+
+    let mut indexes = Vec::with_capacity((width * height) as usize);
+
+    for y in 0..height {
+        for x in 0..width {
+            let initial_pixels: Vec<_> = images.iter()
+                                               .map(|image| *image.get_pixel(x, y))
+                                               .collect();
+            let index = quantization_map.get(&initial_pixels).unwrap();
+            indexes.push(*index as u8);
+        }
+    }
+
+    indexes
+}
+
+fn calculate_palettes(color_combinations: Vec<&Vec<Pixel>>) -> (Vec<Vec<u8>>, Vec<Vec<u8>>) {
+    let num_palette_entries = color_combinations.len();
+    let num_images = color_combinations[0].len();
+
+    let mut rgb_palettes = Vec::with_capacity(num_images);
+    let mut alpha_palettes = Vec::with_capacity(num_images);
+
+    for _ in 0..num_images {
+        rgb_palettes.push(Vec::with_capacity(num_palette_entries * 3));
+        alpha_palettes.push(Vec::with_capacity(num_palette_entries));
+    }
+
+    for color_combination in color_combinations {
+        for (image_index, pixel) in color_combination.into_iter().enumerate() {
+            let (r, g, b, a) = pixel.channels4();
+            rgb_palettes[image_index].push(r);
+            rgb_palettes[image_index].push(g);
+            rgb_palettes[image_index].push(b);
+            alpha_palettes[image_index].push(a);
+        }
+    }
+
+    (rgb_palettes, alpha_palettes)
+}
+
+fn write_pngs<'a, O>(output_paths: O,
+                 indexed_image_data: Vec<u8>,
+                 rgb_palettes: Vec<Vec<u8>>,
+                 alpha_palettes: Vec<Vec<u8>>,
+                 width: u32,
+                 height: u32)
+                 -> io::Result<()>
+    where O: Iterator<Item = &'a Path>
+{
+    for ((output_path, rgb_palette), alpha_palette) in output_paths.zip(rgb_palettes.into_iter()).zip(alpha_palettes.into_iter()) {
+        let ref mut output = try!(File::create(output_path));
+        let mut encoder = png::Encoder::new(output, width, height);
+        encoder.set(png::ColorType::Indexed).set(png::BitDepth::Eight);
+
+        let mut writer = try!(encoder.write_header());
+        try!(writer.write_chunk(png::chunk::PLTE, &rgb_palette));
+        try!(writer.write_chunk(png::chunk::tRNS, &alpha_palette));
+        try!(writer.write_image_data(&indexed_image_data));
+    }
+
+    Ok(())
 }
