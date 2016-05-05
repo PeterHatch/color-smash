@@ -42,6 +42,11 @@ fn main() {
         return;
     }
 
+    if matches.opt_present("version") {
+        print!("color_smash {}", env!("CARGO_PKG_VERSION"));
+        return;
+    }
+
     let colortype = options::color_type(matches.opt_str("colortype")).unwrap_or_else(|error| {
         println!("{}", error);
         std::process::exit(1);
@@ -77,6 +82,7 @@ fn initialize_options() -> Options {
     let mut options = Options::new();
 
     options.optflag("h", "help", "print this help message.");
+    options.optflag("V", "version", "print version info and exit.");
     options.optflag("v", "verbose", "print detailed output.");
     options.optopt("s",
                    "suffix",
