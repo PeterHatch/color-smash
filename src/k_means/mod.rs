@@ -12,10 +12,10 @@ use std::fmt::{Debug, Display};
 use std::hash::BuildHasherDefault;
 use std::hash::Hash;
 use std::hash::SipHasher;
-use std::num::Zero;
+use std::iter::Sum;
 
 use num;
-use num::{Float, FromPrimitive, NumCast};
+use num::{Float, FromPrimitive, NumCast, Zero};
 use ordered_float::NotNaN;
 
 mod initializer;
@@ -31,7 +31,7 @@ pub trait Input : SimpleInput {
 /// subset is what Grouped needs.
 pub trait SimpleInput : Eq + Hash + Clone + Debug {
     type Output: Output;
-    type Distance: Display + Float + FromPrimitive + NumCast + PartialOrd + Zero;
+    type Distance: Display + Float + FromPrimitive + NumCast + PartialOrd + Sum + Zero;
 
     fn distance_to(&self, other: &Self::Output) -> Self::Distance;
     fn normalized_distance(&self, other: &Self::Output) -> Self::Distance;
@@ -54,7 +54,7 @@ pub trait SimpleInput : Eq + Hash + Clone + Debug {
 ///
 /// Most commonly this will be the same type as the input.
 pub trait Output : Eq + Hash + Clone + Debug {
-    type Distance: Display + Float + FromPrimitive + NumCast + PartialOrd + Zero;
+    type Distance: Display + Float + FromPrimitive + NumCast + PartialOrd + Sum + Zero;
     fn distance_to(&self, other: &Self) -> Self::Distance;
 }
 

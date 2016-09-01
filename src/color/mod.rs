@@ -1,10 +1,9 @@
 //! This implements k-means traits for colors and other support functions.
 
 use std::marker::PhantomData;
-use std::num::Zero;
 
 use image_lib;
-use num::FromPrimitive;
+use num::{FromPrimitive, Zero};
 
 use k_means::{SimpleInput, Input, Output, Grouped};
 

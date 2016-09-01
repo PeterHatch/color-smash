@@ -2,9 +2,6 @@
 //!
 //! Calls images::quantize to do the actual work of quantization.
 
-#![feature(iter_arith)]
-#![feature(zero_one)]
-
 #![cfg_attr(test, feature(test))]
 
 use std::env;

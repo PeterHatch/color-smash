@@ -6,7 +6,7 @@ use std::io;
 use std::path::Path;
 
 use image_lib;
-use image_lib::{GenericImage, RgbaImage, Pixel as PixelTrait, ImageError};
+use image_lib::{RgbaImage, Pixel as PixelTrait, ImageError};
 
 use png;
 use png::HasParameters;

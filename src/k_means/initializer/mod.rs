@@ -1,6 +1,5 @@
-use super::{Input, Output};
-use std::num::Zero;
-use num::{Float, FromPrimitive};
+use super::Input;
+use num::{Float, FromPrimitive, Zero};
 use ordered_float::NotNaN;
 
 pub fn initialize_centers<I: Input>(k: u32, points: &Vec<I>) -> (Vec<I::Output>, Vec<Vec<&I>>) {
