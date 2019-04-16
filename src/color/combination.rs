@@ -4,7 +4,7 @@
 //! given pixel location, with one color per input image.
 
 use color::{Color, ConvertibleColor, Pixel};
-use k_means::{SimpleInput, Input, Output, Grouped};
+use k_means::{Grouped, Input, Output, SimpleInput};
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub struct ColorCombination<T: Color> {
@@ -23,7 +23,11 @@ impl<T: Color> ColorCombination<T> {
 impl<T: Color> Output for ColorCombination<T> {
     type Distance = T::Distance;
     fn distance_to(&self, other: &ColorCombination<T>) -> Self::Distance {
-        self.colors.iter().zip(other.colors.iter()).map(|(c1, c2)| c1.distance_to(c2)).sum()
+        self.colors
+            .iter()
+            .zip(other.colors.iter())
+            .map(|(c1, c2)| c1.distance_to(c2))
+            .sum()
     }
 }
 
@@ -37,7 +41,10 @@ impl<I: Color, O: Color> ConvertibleColorCombination<I, O> {
         ConvertibleColorCombination { colors: colors }
     }
     pub fn as_pixels(&self) -> Vec<Pixel> {
-        self.colors.iter().map(|input_color| input_color.color.as_pixel()).collect()
+        self.colors
+            .iter()
+            .map(|input_color| input_color.color.as_pixel())
+            .collect()
     }
 }
 
@@ -67,21 +74,24 @@ impl<I: Color, O: Color> SimpleInput for ConvertibleColorCombination<I, O> {
 }
 
 impl<I: Color, O: Color> Input for Grouped<ConvertibleColorCombination<I, O>> {
-    fn mean_of(grouped_colorsets: &Vec<&Grouped<ConvertibleColorCombination<I, O>>>) -> Self::Output {
+    fn mean_of(
+        grouped_colorsets: &Vec<&Grouped<ConvertibleColorCombination<I, O>>>,
+    ) -> Self::Output {
         mean_of(grouped_colorsets)
     }
 }
 
-fn mean_of<I: Color, O: Color>(grouped_colorsets: &Vec<&Grouped<ConvertibleColorCombination<I, O>>>)
-                               -> ColorCombination<O> {
+fn mean_of<I: Color, O: Color>(
+    grouped_colorsets: &Vec<&Grouped<ConvertibleColorCombination<I, O>>>,
+) -> ColorCombination<O> {
     let color_count = grouped_colorsets[0].data.colors.len();
     let mean_colors = (0..color_count)
-                          .map(|i| {
-                              let color_iter = grouped_colorsets.iter().map(|&group| {
-                                  (&group.data.colors[i], group.count)
-                              });
-                              ::color::mean_of_colors(color_iter)
-                          })
-                          .collect();
+        .map(|i| {
+            let color_iter = grouped_colorsets
+                .iter()
+                .map(|&group| (&group.data.colors[i], group.count));
+            ::color::mean_of_colors(color_iter)
+        })
+        .collect();
     ColorCombination::new(mean_colors)
 }

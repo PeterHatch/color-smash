@@ -1,10 +1,10 @@
 use super::quantization_map_from_images;
 use color::*;
 
-use std::collections::HashSet;
-use std::path::Path;
 use image_lib;
 use image_lib::RgbaImage;
+use std::collections::HashSet;
+use std::path::Path;
 
 use test::Bencher;
 
@@ -36,7 +36,11 @@ fn has_7_colors() {
 fn rgb_is_zero_if_alpha_is() {
     let image = load_test_image();
     let quantization_map = quantization_map_from_images::<Rgb5a3>(&vec![image], 256, false);
-    for colors in quantization_map.values().into_iter().chain(quantization_map.keys().into_iter()) {
+    for colors in quantization_map
+        .values()
+        .into_iter()
+        .chain(quantization_map.keys().into_iter())
+    {
         for color in colors {
             if color.data[3] == 0 {
                 assert_eq!(color.data, [0, 0, 0, 0]);

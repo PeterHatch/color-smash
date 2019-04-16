@@ -8,16 +8,16 @@ use std::env;
 use std::path::{Path, PathBuf};
 
 extern crate image as image_lib;
-extern crate png;
 extern crate num;
 extern crate ordered_float;
+extern crate png;
 
 extern crate getopts;
 use getopts::{Matches, Options};
 
 mod color;
-mod k_means;
 mod images;
+mod k_means;
 mod options;
 
 #[cfg(test)]
@@ -49,10 +49,12 @@ fn main() {
         std::process::exit(1);
     });
 
-    let num_colors: u32 = matches.opt_get_default("colors", 256).unwrap_or_else(|error| {
-        println!("{}", error);
-        std::process::exit(1);
-    });
+    let num_colors: u32 = matches
+        .opt_get_default("colors", 256)
+        .unwrap_or_else(|error| {
+            println!("{}", error);
+            std::process::exit(1);
+        });
 
     if num_colors > 256 {
         println!("More than 256 colors in the palette is not supported.");
@@ -65,20 +67,22 @@ fn main() {
 
     let verbose = matches.opt_present("verbose");
 
-    let input_paths: Vec<&Path> = matches.free
-                                         .iter()
-                                         .map(|input_string| Path::new(input_string))
-                                         .collect();
-    let output_pathbufs: Vec<PathBuf> = input_paths.iter()
-                                                   .map(|input_path| {
-                                                       get_output_path(input_path, &matches)
-                                                   })
-                                                   .collect();
-    let result = images::quantize(input_paths.into_iter(),
-                                  output_pathbufs.iter().map(|o| o.as_path()),
-                                  colortype,
-                                  num_colors,
-                                  verbose);
+    let input_paths: Vec<&Path> = matches
+        .free
+        .iter()
+        .map(|input_string| Path::new(input_string))
+        .collect();
+    let output_pathbufs: Vec<PathBuf> = input_paths
+        .iter()
+        .map(|input_path| get_output_path(input_path, &matches))
+        .collect();
+    let result = images::quantize(
+        input_paths.into_iter(),
+        output_pathbufs.iter().map(|o| o.as_path()),
+        colortype,
+        num_colors,
+        verbose,
+    );
 
     if let Err(error) = result {
         println!("{}", error);
@@ -92,18 +96,24 @@ fn initialize_options() -> Options {
     options.optflag("h", "help", "print this help message.");
     options.optflag("V", "version", "print version info and exit.");
     options.optflag("v", "verbose", "print detailed output.");
-    options.optopt("s",
-                   "suffix",
-                   "set custom suffix for output filenames.",
-                   "SUFFIX");
-    options.optopt("c",
-                   "colortype",
-                   "set output to RGBA8 (default) or RGB5A3.",
-                   "TYPE");
-    options.optopt("n",
-                   "colors",
-                   "set number of colors in output files.",
-                   "NUMBER");
+    options.optopt(
+        "s",
+        "suffix",
+        "set custom suffix for output filenames.",
+        "SUFFIX",
+    );
+    options.optopt(
+        "c",
+        "colortype",
+        "set output to RGBA8 (default) or RGB5A3.",
+        "TYPE",
+    );
+    options.optopt(
+        "n",
+        "colors",
+        "set number of colors in output files.",
+        "NUMBER",
+    );
 
     options
 }

@@ -13,13 +13,17 @@ impl Color for Rgba8 {
 
         let a = (a_float * 255.0).round() as u8;
         if a == 0 {
-            return Rgba8 { data: Pixel { data: [0, 0, 0, 0] } };
+            return Rgba8 {
+                data: Pixel { data: [0, 0, 0, 0] },
+            };
         }
 
         let r = (r_float * 255.0).round() as u8;
         let g = (g_float * 255.0).round() as u8;
         let b = (b_float * 255.0).round() as u8;
-        Rgba8 { data: Pixel { data: [r, g, b, a] } }
+        Rgba8 {
+            data: Pixel { data: [r, g, b, a] },
+        }
     }
 
     fn as_pixel(&self) -> Pixel {
@@ -28,10 +32,12 @@ impl Color for Rgba8 {
 
     fn components(&self) -> (f64, f64, f64, f64) {
         let (r, g, b, a) = self.data.channels4();
-        ((r as f64) / 255.0,
-         (g as f64) / 255.0,
-         (b as f64) / 255.0,
-         (a as f64) / 255.0)
+        (
+            (r as f64) / 255.0,
+            (g as f64) / 255.0,
+            (b as f64) / 255.0,
+            (a as f64) / 255.0,
+        )
     }
 }
 

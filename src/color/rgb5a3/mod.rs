@@ -77,11 +77,10 @@ impl Color for Rgb5a3 {
                 let b = (b_float * 15.0).round() as u16;
                 (a << 12) | (r << 8) | (g << 4) | b
             }
-            _ => {
-                panic!("Invalid alpha parameter to Rgb5a3::new: {:?} (as 3 bit integer {:?})",
-                       a_float,
-                       a)
-            }
+            _ => panic!(
+                "Invalid alpha parameter to Rgb5a3::new: {:?} (as 3 bit integer {:?})",
+                a_float, a
+            ),
         };
         Rgb5a3 { data: data }
     }
@@ -92,7 +91,9 @@ impl Color for Rgb5a3 {
                 let r = convert_5_bits_to_8(self.r5());
                 let g = convert_5_bits_to_8(self.g5());
                 let b = convert_5_bits_to_8(self.b5());
-                Pixel { data: [r, g, b, 0xFF] }
+                Pixel {
+                    data: [r, g, b, 0xFF],
+                }
             }
             Rgb5a3Type::Rgb4a3 => {
                 let a = convert_3_bits_to_8(self.a3());
@@ -126,21 +127,19 @@ impl Color for Rgb5a3 {
 impl fmt::Debug for Rgb5a3 {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         match self.storage_type() {
-            Rgb5a3Type::Rgb5 => {
-                fmt.debug_struct("Rgb5a3 (Rgb5)")
-                   .field("r", &self.r5())
-                   .field("g", &self.g5())
-                   .field("b", &self.b5())
-                   .finish()
-            }
-            Rgb5a3Type::Rgb4a3 => {
-                fmt.debug_struct("Rgb5a3 (Rgb4a3)")
-                   .field("r", &self.r4())
-                   .field("g", &self.g4())
-                   .field("b", &self.b4())
-                   .field("a", &self.a3())
-                   .finish()
-            }
+            Rgb5a3Type::Rgb5 => fmt
+                .debug_struct("Rgb5a3 (Rgb5)")
+                .field("r", &self.r5())
+                .field("g", &self.g5())
+                .field("b", &self.b5())
+                .finish(),
+            Rgb5a3Type::Rgb4a3 => fmt
+                .debug_struct("Rgb5a3 (Rgb4a3)")
+                .field("r", &self.r4())
+                .field("g", &self.g4())
+                .field("b", &self.b4())
+                .field("a", &self.a3())
+                .finish(),
         }
     }
 }
