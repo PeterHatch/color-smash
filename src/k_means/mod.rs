@@ -8,15 +8,15 @@
 //! to RGB5A3, for example.
 
 use std::collections::HashMap;
+use std::collections::hash_map::DefaultHasher;
 use std::fmt::{Debug, Display};
 use std::hash::BuildHasherDefault;
 use std::hash::Hash;
-use std::hash::SipHasher;
 use std::iter::Sum;
 
 use num;
 use num::{Float, FromPrimitive, NumCast, Zero};
-use ordered_float::NotNaN;
+use ordered_float::NotNan;
 
 mod initializer;
 
@@ -39,7 +39,7 @@ pub trait SimpleInput : Eq + Hash + Clone + Debug {
     fn nearest(&self, centers: &Vec<Self::Output>) -> u32 {
         let centers_with_indexes = centers.iter().zip(0..);
         let (_center, cluster) = centers_with_indexes.min_by_key(|&(center, _cluster)| {
-                                                         NotNaN::new(self.distance_to(center))
+                                                         NotNan::new(self.distance_to(center))
                                                              .unwrap()
                                                      })
                                                      .unwrap();
@@ -70,7 +70,7 @@ pub fn collect_groups<I>(items: I) -> Vec<Grouped<I::Item>>
     where I: Iterator,
           I::Item: SimpleInput
 {
-    let mut count_of_items: HashMap<I::Item, u32, BuildHasherDefault<SipHasher>> = Default::default();
+    let mut count_of_items: HashMap<I::Item, u32, BuildHasherDefault<DefaultHasher>> = Default::default();
     for item in items {
         let counter = count_of_items.entry(item).or_insert(0);
         *counter += 1;
@@ -207,7 +207,7 @@ fn calculate_distances_between_centers<O: Output>(centers: &Vec<O>) -> Vec<Vec<(
     }
 
     for distances in distances_per_center.iter_mut() {
-        distances.sort_by_key(|&(_center_index, distance)| NotNaN::new(distance).unwrap());
+        distances.sort_by_key(|&(_center_index, distance)| NotNan::new(distance).unwrap());
     }
 
     distances_per_center
