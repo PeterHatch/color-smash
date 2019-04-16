@@ -109,9 +109,7 @@ impl<I: SimpleInput> SimpleInput for Grouped<I> {
 }
 
 /// Run the k-means algorithm.
-pub fn run<I: Input>(data_points: &Vec<I>, verbose: bool) -> (Vec<I::Output>, Vec<Vec<&I>>) {
-    let k = 256;
-
+pub fn run<I: Input>(data_points: &Vec<I>, k: u32, verbose: bool) -> (Vec<I::Output>, Vec<Vec<&I>>) {
     let (mut centers, mut points_per_cluster) = initializer::initialize_centers(k, &data_points);
 
     for iteration in 1.. {

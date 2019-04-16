@@ -49,6 +49,16 @@ fn main() {
         std::process::exit(1);
     });
 
+    let num_colors: u32 = matches.opt_get_default("colors", 256).unwrap_or_else(|error| {
+        println!("{}", error);
+        std::process::exit(1);
+    });
+
+    if num_colors > 256 {
+        println!("More than 256 colors in the palette is not supported.");
+        std::process::exit(1);
+    }
+
     if matches.free.is_empty() {
         exit_with_bad_args("No input file specified.", program, options);
     }
@@ -67,6 +77,7 @@ fn main() {
     let result = images::quantize(input_paths.into_iter(),
                                   output_pathbufs.iter().map(|o| o.as_path()),
                                   colortype,
+                                  num_colors,
                                   verbose);
 
     if let Err(error) = result {
@@ -89,6 +100,10 @@ fn initialize_options() -> Options {
                    "colortype",
                    "set output to RGBA8 (default) or RGB5A3.",
                    "TYPE");
+    options.optopt("n",
+                   "colors",
+                   "set number of colors in output files.",
+                   "NUMBER");
 
     options
 }

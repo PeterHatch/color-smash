@@ -23,6 +23,7 @@ mod tests;
 pub fn quantize<'a, 'b, I, O>(input_paths: I,
                               output_paths: O,
                               colortype: ColorType,
+                              num_colors: u32,
                               verbose: bool)
                               -> Result<(), ImageError>
     where I: Iterator<Item = &'a Path>,
@@ -30,7 +31,7 @@ pub fn quantize<'a, 'b, I, O>(input_paths: I,
 {
     let images = try!(open_images(input_paths));
 
-    let quantization_map = quantization_map_from_images_and_color_type(&images, colortype, verbose);
+    let quantization_map = quantization_map_from_images_and_color_type(&images, colortype, num_colors, verbose);
 
     let mut color_combinations = ::std::collections::HashSet::new();
     for color_combination in quantization_map.values() {
@@ -69,15 +70,17 @@ fn open_images<'a, I: Iterator<Item = &'a Path>>(input_paths: I)
 
 fn quantization_map_from_images_and_color_type(images: &Vec<RgbaImage>,
                                                colortype: ColorType,
+                                               num_colors: u32,
                                                verbose: bool)
                                                -> HashMap<Vec<Pixel>, Vec<Pixel>> {
     match colortype {
-        ColorType::Rgba8 => quantization_map_from_images::<Rgba8>(images, verbose),
-        ColorType::Rgb5a3 => quantization_map_from_images::<Rgb5a3>(images, verbose),
+        ColorType::Rgba8 => quantization_map_from_images::<Rgba8>(images, num_colors, verbose),
+        ColorType::Rgb5a3 => quantization_map_from_images::<Rgb5a3>(images, num_colors, verbose),
     }
 }
 
 fn quantization_map_from_images<O: Color>(images: &Vec<RgbaImage>,
+                                          num_colors: u32,
                                           verbose: bool)
                                           -> HashMap<Vec<Pixel>, Vec<Pixel>> {
     let color_combinations = get_color_combinations::<O>(images);
@@ -88,7 +91,7 @@ fn quantization_map_from_images<O: Color>(images: &Vec<RgbaImage>,
                  grouped_color_combinations.len());
     }
 
-    quantization_map_from_items(grouped_color_combinations, verbose)
+    quantization_map_from_items(grouped_color_combinations, num_colors, verbose)
 }
 
 fn get_color_combinations<O: Color>(images: &Vec<RgbaImage>)
@@ -118,10 +121,10 @@ fn group_color_combinations<O: Color>(color_combinations: Vec<ConvertibleColorCo
     ::k_means::collect_groups(color_combinations.into_iter())
 }
 
-fn quantization_map_from_items<O: Color>(grouped_color_combinations: Vec<Grouped<ConvertibleColorCombination<Rgba8, O>>>, verbose: bool)
+fn quantization_map_from_items<O: Color>(grouped_color_combinations: Vec<Grouped<ConvertibleColorCombination<Rgba8, O>>>, num_colors: u32, verbose: bool)
                                          -> HashMap<Vec<Pixel>, Vec<Pixel>> {
     let (centers, grouped_color_combinations_per_cluster) =
-        ::k_means::run(&grouped_color_combinations, verbose);
+        ::k_means::run(&grouped_color_combinations, num_colors, verbose);
 
     let mut quantization_map = HashMap::new();
     for (center, grouped_color_combinations) in
