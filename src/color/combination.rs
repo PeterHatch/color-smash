@@ -13,10 +13,10 @@ pub struct ColorCombination<T: Color> {
 
 impl<T: Color> ColorCombination<T> {
     pub fn new(colors: Vec<T>) -> ColorCombination<T> {
-        ColorCombination { colors: colors }
+        ColorCombination { colors }
     }
     pub fn as_pixels(&self) -> Vec<Pixel> {
-        self.colors.iter().map(|color| color.as_pixel()).collect()
+        self.colors.iter().map(Color::as_pixel).collect()
     }
 }
 
@@ -38,7 +38,7 @@ pub struct ConvertibleColorCombination<I: Color, O: Color> {
 
 impl<I: Color, O: Color> ConvertibleColorCombination<I, O> {
     pub fn new(colors: Vec<ConvertibleColor<I, O>>) -> ConvertibleColorCombination<I, O> {
-        ConvertibleColorCombination { colors: colors }
+        ConvertibleColorCombination { colors }
     }
     pub fn as_pixels(&self) -> Vec<Pixel> {
         self.colors
@@ -69,20 +69,18 @@ impl<I: Color, O: Color> SimpleInput for ConvertibleColorCombination<I, O> {
     }
 
     fn as_output(&self) -> Self::Output {
-        ColorCombination::new(self.colors.iter().map(|color| color.as_output()).collect())
+        ColorCombination::new(self.colors.iter().map(SimpleInput::as_output).collect())
     }
 }
 
 impl<I: Color, O: Color> Input for Grouped<ConvertibleColorCombination<I, O>> {
-    fn mean_of(
-        grouped_colorsets: &Vec<&Grouped<ConvertibleColorCombination<I, O>>>,
-    ) -> Self::Output {
+    fn mean_of(grouped_colorsets: &[&Grouped<ConvertibleColorCombination<I, O>>]) -> Self::Output {
         mean_of(grouped_colorsets)
     }
 }
 
 fn mean_of<I: Color, O: Color>(
-    grouped_colorsets: &Vec<&Grouped<ConvertibleColorCombination<I, O>>>,
+    grouped_colorsets: &[&Grouped<ConvertibleColorCombination<I, O>>],
 ) -> ColorCombination<O> {
     let color_count = grouped_colorsets[0].data.colors.len();
     let mean_colors = (0..color_count)

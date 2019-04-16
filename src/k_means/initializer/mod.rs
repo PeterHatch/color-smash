@@ -2,7 +2,7 @@ use super::Input;
 use num::{Float, FromPrimitive, Zero};
 use ordered_float::NotNan;
 
-pub fn initialize_centers<I: Input>(k: u32, points: &Vec<I>) -> (Vec<I::Output>, Vec<Vec<&I>>) {
+pub fn initialize_centers<I: Input>(k: u32, points: &[I]) -> (Vec<I::Output>, Vec<Vec<&I>>) {
     let mut centers = Vec::with_capacity(k as usize);
     let first_center = points
         .iter()
@@ -31,7 +31,7 @@ pub fn initialize_centers<I: Input>(k: u32, points: &Vec<I>) -> (Vec<I::Output>,
             farthest_point_of(cluster_to_split, &cluster_per_point, &distance_per_point);
         let new_center = points[farthest_point_index].as_output();
 
-        if let Some(_) = centers.iter().find(|&center| *center == new_center) {
+        if centers.iter().any(|center| *center == new_center) {
             println!("Created duplicate center: {:?}", new_center);
         }
 
@@ -66,7 +66,7 @@ pub fn initialize_centers<I: Input>(k: u32, points: &Vec<I>) -> (Vec<I::Output>,
 }
 
 fn points_per_cluster<I: Input>(
-    points: &Vec<I>,
+    points: &[I],
     cluster_per_point: Vec<usize>,
     k: u32,
 ) -> Vec<Vec<&I>> {
@@ -79,7 +79,7 @@ fn points_per_cluster<I: Input>(
     points_per_cluster
 }
 
-fn worst_cluster<T: Float>(distance_per_cluster: &Vec<T>) -> usize {
+fn worst_cluster<T: Float>(distance_per_cluster: &[T]) -> usize {
     let distances_with_indexes = distance_per_cluster.iter().zip(0..);
     let (_distance, cluster) = distances_with_indexes
         .max_by_key(|&(&distance, _cluster)| NotNan::new(distance).unwrap())
@@ -89,8 +89,8 @@ fn worst_cluster<T: Float>(distance_per_cluster: &Vec<T>) -> usize {
 
 fn farthest_point_of<T: Float>(
     target_cluster: usize,
-    cluster_per_point: &Vec<usize>,
-    distance_per_point: &Vec<T>,
+    cluster_per_point: &[usize],
+    distance_per_point: &[T],
 ) -> usize {
     let point_indexes = cluster_per_point
         .iter()

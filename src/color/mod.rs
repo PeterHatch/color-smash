@@ -88,7 +88,7 @@ impl<I: Color, O: Color> SimpleInput for ConvertibleColor<I, O> {
 }
 
 impl<I: Color, O: Color> Input for Grouped<ConvertibleColor<I, O>> {
-    fn mean_of(grouped_colors: &Vec<&Grouped<ConvertibleColor<I, O>>>) -> Self::Output {
+    fn mean_of(grouped_colors: &[&Grouped<ConvertibleColor<I, O>>]) -> Self::Output {
         mean_of_colors(
             grouped_colors
                 .iter()
@@ -111,7 +111,7 @@ where
 
     for (data, count) in colors_with_counts {
         let (r, g, b, a) = data.color.components();
-        let weighted_a = a * (count as f64);
+        let weighted_a = a * f64::from(count);
 
         r_sum += r * weighted_a;
         g_sum += g * weighted_a;
@@ -124,7 +124,7 @@ where
         let r = r_sum / a_sum;
         let g = g_sum / a_sum;
         let b = b_sum / a_sum;
-        let a = a_sum / (total_count as f64);
+        let a = a_sum / f64::from(total_count);
 
         O::new((r, g, b, a))
     } else {

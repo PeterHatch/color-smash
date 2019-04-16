@@ -78,7 +78,7 @@ fn main() {
         .collect();
     let result = images::quantize(
         input_paths.into_iter(),
-        output_pathbufs.iter().map(|o| o.as_path()),
+        output_pathbufs.iter().map(PathBuf::as_path),
         colortype,
         num_colors,
         verbose,

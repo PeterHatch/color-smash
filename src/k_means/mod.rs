@@ -22,7 +22,7 @@ mod initializer;
 
 /// This defines the functions k-means uses to cluster input data.
 pub trait Input: SimpleInput {
-    fn mean_of(points: &Vec<&Self>) -> Self::Output;
+    fn mean_of(points: &[&Self]) -> Self::Output;
 }
 
 /// A subset of the input trait with methods that operate on a single point.
@@ -36,7 +36,7 @@ pub trait SimpleInput: Eq + Hash + Clone + Debug {
     fn distance_to(&self, other: &Self::Output) -> Self::Distance;
     fn normalized_distance(&self, other: &Self::Output) -> Self::Distance;
     fn as_output(&self) -> Self::Output;
-    fn nearest(&self, centers: &Vec<Self::Output>) -> u32 {
+    fn nearest(&self, centers: &[Self::Output]) -> u32 {
         let centers_with_indexes = centers.iter().zip(0..);
         let (_center, cluster) = centers_with_indexes
             .min_by_key(|&(center, _cluster)| NotNan::new(self.distance_to(center)).unwrap())
@@ -84,10 +84,7 @@ where
 
 impl<I: SimpleInput> Grouped<I> {
     fn new(data: I, count: u32) -> Grouped<I> {
-        Grouped {
-            data: data,
-            count: count,
-        }
+        Grouped { data, count }
     }
 }
 
@@ -110,11 +107,7 @@ impl<I: SimpleInput> SimpleInput for Grouped<I> {
 }
 
 /// Run the k-means algorithm.
-pub fn run<I: Input>(
-    data_points: &Vec<I>,
-    k: u32,
-    verbose: bool,
-) -> (Vec<I::Output>, Vec<Vec<&I>>) {
+pub fn run<I: Input>(data_points: &[I], k: u32, verbose: bool) -> (Vec<I::Output>, Vec<Vec<&I>>) {
     let (mut centers, mut points_per_cluster) = initializer::initialize_centers(k, &data_points);
 
     for iteration in 1.. {
@@ -150,8 +143,8 @@ pub fn run<I: Input>(
 }
 
 fn assign_to_clusters<'a, 'b, 'c, I>(
-    centers: &'a Vec<I::Output>,
-    prior_points_per_cluster: &'b Vec<Vec<&'c I>>,
+    centers: &'a [I::Output],
+    prior_points_per_cluster: &'b [Vec<&'c I>],
 ) -> Vec<Vec<&'c I>>
 where
     I: Input,
@@ -197,9 +190,7 @@ where
     points_per_cluster
 }
 
-fn calculate_distances_between_centers<O: Output>(
-    centers: &Vec<O>,
-) -> Vec<Vec<(u32, O::Distance)>> {
+fn calculate_distances_between_centers<O: Output>(centers: &[O]) -> Vec<Vec<(u32, O::Distance)>> {
     let k = centers.len();
     let mut distances_per_center = vec![Vec::with_capacity(k - 1); k];
 
@@ -222,7 +213,7 @@ fn calculate_distances_between_centers<O: Output>(
     distances_per_center
 }
 
-fn reposition_centers<I: Input>(centers: &mut Vec<I::Output>, points_per_cluster: &Vec<Vec<&I>>) {
+fn reposition_centers<I: Input>(centers: &mut Vec<I::Output>, points_per_cluster: &[Vec<&I>]) {
     for (center, points) in centers.iter_mut().zip(points_per_cluster.iter()) {
         *center = I::mean_of(points);
     }

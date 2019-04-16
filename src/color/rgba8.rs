@@ -33,10 +33,10 @@ impl Color for Rgba8 {
     fn components(&self) -> (f64, f64, f64, f64) {
         let (r, g, b, a) = self.data.channels4();
         (
-            (r as f64) / 255.0,
-            (g as f64) / 255.0,
-            (b as f64) / 255.0,
-            (a as f64) / 255.0,
+            f64::from(r) / 255.0,
+            f64::from(g) / 255.0,
+            f64::from(b) / 255.0,
+            f64::from(a) / 255.0,
         )
     }
 }

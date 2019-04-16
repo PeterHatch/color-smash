@@ -16,7 +16,7 @@ enum Rgb5a3Type {
 }
 
 impl Rgb5a3 {
-    fn storage_type(&self) -> Rgb5a3Type {
+    fn storage_type(self) -> Rgb5a3Type {
         if (self.data >> 15) & 1 == 1 {
             Rgb5a3Type::Rgb5
         } else {
@@ -24,26 +24,26 @@ impl Rgb5a3 {
         }
     }
 
-    fn r5(&self) -> u16 {
+    fn r5(self) -> u16 {
         (self.data >> 10) & 0x1F
     }
-    fn g5(&self) -> u16 {
+    fn g5(self) -> u16 {
         (self.data >> 5) & 0x1F
     }
-    fn b5(&self) -> u16 {
+    fn b5(self) -> u16 {
         self.data & 0x1F
     }
 
-    fn a3(&self) -> u16 {
+    fn a3(self) -> u16 {
         (self.data >> 12) & 0x07
     }
-    fn r4(&self) -> u16 {
+    fn r4(self) -> u16 {
         (self.data >> 8) & 0x0F
     }
-    fn g4(&self) -> u16 {
+    fn g4(self) -> u16 {
         (self.data >> 4) & 0x0F
     }
-    fn b4(&self) -> u16 {
+    fn b4(self) -> u16 {
         self.data & 0x0F
     }
 }
@@ -71,7 +71,7 @@ impl Color for Rgb5a3 {
                 let b = (b_float * 31.0).round() as u16;
                 (1 << 15) | (r << 10) | (g << 5) | b
             }
-            1...7 => {
+            1...6 => {
                 let r = (r_float * 15.0).round() as u16;
                 let g = (g_float * 15.0).round() as u16;
                 let b = (b_float * 15.0).round() as u16;
@@ -82,7 +82,7 @@ impl Color for Rgb5a3 {
                 a_float, a
             ),
         };
-        Rgb5a3 { data: data }
+        Rgb5a3 { data }
     }
 
     fn as_pixel(&self) -> Pixel {
@@ -108,16 +108,16 @@ impl Color for Rgb5a3 {
     fn components(&self) -> (f64, f64, f64, f64) {
         match self.storage_type() {
             Rgb5a3Type::Rgb5 => {
-                let r = (self.r5() as f64) / 31.0;
-                let g = (self.g5() as f64) / 31.0;
-                let b = (self.b5() as f64) / 31.0;
+                let r = f64::from(self.r5()) / 31.0;
+                let g = f64::from(self.g5()) / 31.0;
+                let b = f64::from(self.b5()) / 31.0;
                 (r, g, b, 1.0)
             }
             Rgb5a3Type::Rgb4a3 => {
-                let a = (self.a3() as f64) / 7.0;
-                let r = (self.r4() as f64) / 15.0;
-                let g = (self.g4() as f64) / 15.0;
-                let b = (self.b4() as f64) / 15.0;
+                let a = f64::from(self.a3()) / 7.0;
+                let r = f64::from(self.r4()) / 15.0;
+                let g = f64::from(self.g4()) / 15.0;
+                let b = f64::from(self.b4()) / 15.0;
                 (r, g, b, a)
             }
         }

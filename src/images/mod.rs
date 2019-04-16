@@ -83,7 +83,7 @@ fn open_images<'a, I: Iterator<Item = &'a Path>>(
 }
 
 fn quantization_map_from_images_and_color_type(
-    images: &Vec<RgbaImage>,
+    images: &[RgbaImage],
     colortype: ColorType,
     num_colors: u32,
     verbose: bool,
@@ -95,7 +95,7 @@ fn quantization_map_from_images_and_color_type(
 }
 
 fn quantization_map_from_images<O: Color>(
-    images: &Vec<RgbaImage>,
+    images: &[RgbaImage],
     num_colors: u32,
     verbose: bool,
 ) -> HashMap<Vec<Pixel>, Vec<Pixel>> {
@@ -113,7 +113,7 @@ fn quantization_map_from_images<O: Color>(
 }
 
 fn get_color_combinations<O: Color>(
-    images: &Vec<RgbaImage>,
+    images: &[RgbaImage],
 ) -> Vec<ConvertibleColorCombination<Rgba8, O>> {
     let width = images[0].width();
     let height = images[0].height();
@@ -175,10 +175,22 @@ fn order_color_combinations(color_combinations: HashSet<&Vec<Pixel>>) -> Vec<&Ve
             }
         }
 
-        let total_alpha: u32 = color_combination.iter().map(|color| color[3] as u32).sum();
-        let total_red: u32 = color_combination.iter().map(|color| color[0] as u32).sum();
-        let total_green: u32 = color_combination.iter().map(|color| color[1] as u32).sum();
-        let total_blue: u32 = color_combination.iter().map(|color| color[2] as u32).sum();
+        let total_alpha: u32 = color_combination
+            .iter()
+            .map(|color| u32::from(color[3]))
+            .sum();
+        let total_red: u32 = color_combination
+            .iter()
+            .map(|color| u32::from(color[0]))
+            .sum();
+        let total_green: u32 = color_combination
+            .iter()
+            .map(|color| u32::from(color[1]))
+            .sum();
+        let total_blue: u32 = color_combination
+            .iter()
+            .map(|color| u32::from(color[2]))
+            .sum();
 
         (
             distinct_colors,
@@ -195,10 +207,10 @@ fn order_color_combinations(color_combinations: HashSet<&Vec<Pixel>>) -> Vec<&Ve
 
 fn index_quantization_map<'a, 'b>(
     quantization_map: &'a HashMap<Vec<Pixel>, Vec<Pixel>>,
-    ordered_color_combinations: &'b Vec<&'a Vec<Pixel>>,
+    ordered_color_combinations: &'b [&'a Vec<Pixel>],
 ) -> HashMap<&'a Vec<Pixel>, usize> {
     let mut colors_to_index = HashMap::with_capacity(ordered_color_combinations.len());
-    for (index, color_combination) in ordered_color_combinations.into_iter().enumerate() {
+    for (index, color_combination) in ordered_color_combinations.iter().enumerate() {
         colors_to_index.insert(color_combination, index);
     }
 
@@ -221,7 +233,7 @@ fn calculate_indexes(
         for x in 0..width {
             let initial_pixels: Vec<_> =
                 images.iter().map(|image| *image.get_pixel(x, y)).collect();
-            let index = quantization_map.get(&initial_pixels).unwrap();
+            let index = &quantization_map[&initial_pixels];
             indexes.push(*index as u8);
         }
     }
@@ -242,7 +254,7 @@ fn calculate_palettes(color_combinations: Vec<&Vec<Pixel>>) -> (Vec<Vec<u8>>, Ve
     }
 
     for color_combination in color_combinations {
-        for (image_index, pixel) in color_combination.into_iter().enumerate() {
+        for (image_index, pixel) in color_combination.iter().enumerate() {
             let (r, g, b, a) = pixel.channels4();
             rgb_palettes[image_index].push(r);
             rgb_palettes[image_index].push(g);
@@ -269,7 +281,7 @@ where
         .zip(rgb_palettes.into_iter())
         .zip(alpha_palettes.into_iter())
     {
-        let ref mut output = try!(File::create(output_path));
+        let mut output = &try!(File::create(output_path));
         let mut encoder = png::Encoder::new(output, width, height);
         encoder
             .set(png::ColorType::Indexed)
